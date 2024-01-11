@@ -1,6 +1,7 @@
 cls:print "Hello world"
 gload "squash.gfx"
 image $C0 to 10,10
+image $80 to 100,10
 sprite 1 image $C0 to 100,100
 line 0,0 ink 3 to 10,10 
 line 0,0 to 100,100
