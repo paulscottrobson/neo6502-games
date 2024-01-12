@@ -1,7 +1,41 @@
-cls:print "Hello world"
+' =====================================
+'		Simple Squash Game
+'		Paul Robson
+' =====================================
+
+cls:sprite clear
 gload "squash.gfx"
-image $C0 to 10,10
-image $80 to 100,10
-sprite 1 image $C0 to 100,100
-line 0,0 ink 3 to 10,10 
-line 0,0 to 100,100
+'
+'		Initialise
+'
+xBat = 20:yBat = 120:sprite 1 image $C0 to xBat,yBat
+xBall = xBat+20:yBall = rand(200)+20:sprite 2 image $80 to xBall,yBall
+repeat
+	xBallInc = -4:yBallInc = rand(9)-4
+until yBallInc <> 0
+'
+'		Main loop
+'
+repeat
+	if event(t1,4) then call UpdateBat()
+	if event(t1,2) then call UpdateBall()
+until false
+end
+'
+'		Update the bat position
+'
+proc UpdateBat()
+	local x,dx,dy
+	x = joypad(dx,dy)
+	yBat = max(16,min(223,yBat+dy*8))
+	sprite 1 to xBat,yBat
+endproc
+'
+'		Update the ball position
+'
+proc UpdateBall()
+	xBall = xBall + xBallInc:yBall = yBall+yBallInc
+	if xBall < 20 | xBall > 310 then xBallInc = -xBallInc
+	if yBall < 10 | yBall > 230 then yBallInc = -yBallInc
+	sprite 2 to xBall,yBall
+endproc
