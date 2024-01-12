@@ -36,6 +36,8 @@ build : $(OBJNAME)
 	cd $(APPNAME) ; $(PYTHON) $(BINDIR)makeimg.zip
 	$(CMAKEDIR) $(APPNAME)$(S)storage
 	$(CCOPY) $(APPNAME)$(S)graphics.gfx $(APPNAME)$(S)storage$(S)$(APPNAME).gfx
+	$(CCOPY) $(APPNAME)$(S)graphics.gfx games$(S)$(APPNAME).gfx
+	$(CCOPY) $(APPNAME)$(S)$(APPNAME).bas games
 	$(CDEL) $(APPNAME)$(S)graphics.gfx
 
 cleargfx:
