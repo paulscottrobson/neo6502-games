@@ -1,14 +1,17 @@
 '
 '		Breakout. Paul Robson.
 '
-call InitialiseFrame()
+call Initialise()
+call NewGame()
 call RedrawFrame()
+call ResetBat()
+call ResetBall()
 end
 
 '
-'		Initialise frame
+'		Initialise 
 '
-proc InitialiseFrame()
+proc Initialise()
 	wallDepth = 6
 	frameWidth = 16
 	backWall = 32
@@ -19,24 +22,78 @@ proc InitialiseFrame()
 		yCentre(i) = 110-brickHeight*i
 		read colour(i) 
 	next
-	data 1,2,3,4,5,6
+	dim score(3)
+	data 13,2,3,12,11,1
+	defchr 192,31,17,17,17,17,17,31
+	defchr 193,1,1,1,1,1,1,1
+	defchr 194,31,1,1,31,16,16,31
+	defchr 195,31,1,1,31,1,1,31
+	defchr 196,17,17,17,31,1,1,1
+	defchr 197,31,16,16,31,1,1,31
+	defchr 198,31,16,16,31,17,17,31
+	defchr 199,31,1,1,1,1,1,1
+	defchr 200,31,17,17,31,17,17,31
+	defchr 201,31,17,17,31,1,1,31
+	gload "breakout.gfx"
+endproc
+'
+'		New Game
+'
+proc NewGame()
+	local i
+	for i = 1 to 3:score(i) = 0:next
+	lives = 5
 endproc
 '
 '		Redraw frame
 '
 proc RedrawFrame()
 	cls:sprite clear
-	text "000" dim 2 ink 7 to 4,4
-
-	rect ink 15 solid from 0,24 to frameWidth,239
-	rect ink 15 solid from 319,24 to 319-frameWidth,239
-	rect ink 15 solid from 0,24 to 319,backWall
+	rect ink 15 solid from 0,26 to frameWidth,239
+	rect ink 15 solid from 319,26 to 319-frameWidth,239
+	rect ink 15 solid from 0,26 to 319,backWall
 	for i = 1 to wallDepth
 		rect ink colour(i) solid from 0,yCentre(i)-brickHeight\2 to 319,yCentre(i)+brickHeight\2
 	next
-
+	brickRemoved = 0
+	brickCount = wallDepth * brickWidthCount
+	call RedrawScore():call RedrawLives()
 endproc
-
+'
+'		Redraw the score
+'
+proc RedrawScore()
+	local i
+	for i = 1 to 3:call DrawDigit(i+2,score(i)):next
+endproc
+'
+'		Redraw the lives count
+'
+proc RedrawLives()
+	call DrawDigit(14,lives)
+endproc
+'
+'		Draw a digit
+'
+proc DrawDigit(x,d)
+	x = x * 18
+	text chr$(d+192) ink 15 dim 3 to x,1
+endproc
+'
+'		Reset the bat
+'
+proc ResetBat()
+	xBat = 160:yBat = 230:widthBat = 32
+	sprite 1 image $C0 anchor 8 to xBat,yBat
+endproc
+'
+'		Reset the ball
+'
+proc ResetBall()
+	xBall = rand(160)+80:yBall = 200
+	xiBall = 4:yiBall = 4
+	sprite 2 image $80 to xBall,yBall
+endproc
 
 
 
