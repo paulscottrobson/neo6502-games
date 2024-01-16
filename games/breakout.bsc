@@ -1,0 +1,42 @@
+'
+'		Breakout. Paul Robson.
+'
+call InitialiseFrame()
+call RedrawFrame()
+end
+
+'
+'		Initialise frame
+'
+proc InitialiseFrame()
+	wallDepth = 6
+	frameWidth = 16
+	backWall = 32
+	brickHeight = 8
+	brickWidthCount = (320-frameWidth*2)\16
+	dim brick(brickWidthCount,wallDepth),colour(wallDepth),yCentre(wallDepth)
+	for i = 1 to wallDepth
+		yCentre(i) = 110-brickHeight*i
+		read colour(i) 
+	next
+	data 1,2,3,4,5,6
+endproc
+'
+'		Redraw frame
+'
+proc RedrawFrame()
+	cls:sprite clear
+	text "000" dim 2 ink 7 to 4,4
+
+	rect ink 15 solid from 0,24 to frameWidth,239
+	rect ink 15 solid from 319,24 to 319-frameWidth,239
+	rect ink 15 solid from 0,24 to 319,backWall
+	for i = 1 to wallDepth
+		rect ink colour(i) solid from 0,yCentre(i)-brickHeight\2 to 319,yCentre(i)+brickHeight\2
+	next
+
+endproc
+
+
+
+

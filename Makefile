@@ -23,9 +23,11 @@ ROOTDIR =  $(dir $(realpath $(lastword $(MAKEFILE_LIST))))..$(S)
 
 BINDIR = $(ROOTDIR)$(S)neo6502-firmware$(S)bin$(S)
 
-APPNAME = squash
+APPNAME = breakout
+
 SRCNAME = $(APPNAME)$(S)$(APPNAME).bsc
 OBJNAME = $(APPNAME)$(S)$(APPNAME).bas
+
 all:
 
 run : build
@@ -37,8 +39,12 @@ build : $(OBJNAME)
 	$(CMAKEDIR) $(APPNAME)$(S)storage
 	$(CCOPY) $(APPNAME)$(S)graphics.gfx $(APPNAME)$(S)storage$(S)$(APPNAME).gfx
 	$(CCOPY) $(APPNAME)$(S)graphics.gfx games$(S)$(APPNAME).gfx
-	$(CCOPY) $(APPNAME)$(S)$(APPNAME).bas games
+	$(CCOPY) $(APPNAME)$(S)$(APPNAME).b* games
 	$(CDEL) $(APPNAME)$(S)graphics.gfx
+
+update:
+	$(CCOPY) games$(S)* $(ROOTDIR)$(S)neo6502-firmware$(S)basic$(S)code$(S)games
+
 
 cleargfx:
 	cd $(APPNAME) ; $(PYTHON) $(BINDIR)createblanks.zip
