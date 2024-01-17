@@ -17,7 +17,7 @@ end
 '
 proc Initialise()
 	wallDepth = 6
-	frameWidth = 16
+	frameWidth = 8
 	backWall = 32
 	brickHeight = 8
 	brickWidthCount = (320-frameWidth*2)\16
@@ -57,7 +57,8 @@ proc RedrawFrame()
 	rect ink 15 solid from 319,26 to 319-frameWidth,239
 	rect ink 15 solid from 0,26 to 319,backWall
 	for i = 1 to wallDepth
-		rect ink colour(i) solid from 0,yCentre(i)-brickHeight\2 to 319,yCentre(i)+brickHeight\2
+		rect ink colour(i) solid from 0,yCentre(i)-brickHeight\2 to 319,yCentre(i)+brickHeight\2-1
+		for j = 0 to brickWidthCount-1:brick(j,i) = 1:next
 	next
 	brickRemoved = 0
 	brickCount = wallDepth * brickWidthCount
@@ -112,8 +113,32 @@ endproc
 '
 proc MoveBall()
 	xBall = xBall + xiBall:yBall = yBall + yiBall
-	if xBall < frameWidth | xBall >= 320-frameWidth then xiBall = -xiBall
-	if yBall < backWall then yiBall = -yiBall
-	if yBall > 230 then yiBall = -yiBall
+	if xBall < frameWidth+3 | xBall >= 317-frameWidth then xiBall = -xiBall
+	if yBall < backWall+3 then yiBall = -yiBall
+	if yBall > 230 then yiBall = -yiBall:xiBall = rand(9)-4
+	if yBall <= yCentre(1) & yBall >= yCentre(wallDepth)-brickHeight\2
+		call CheckBrick()
+	endif
 	sprite 2 to xBall,yBall
 endproc
+'
+'		Check hit brick
+'
+proc CheckBrick()
+	local x,y
+	x = (xBall - frameWidth) \ 16
+	y = (yCentre(1)-yBall) \ brickHeight + 1
+	if brick(x,y) <> 0
+		call RemoveBrick(x,y):yiBall = -yiBall
+	endif
+endproc
+'
+'		Remove brick
+'
+proc RemoveBrick(x,y)
+	brick(x,y) = 0
+	x = x * 16 + frameWidth:y = yCentre(y)-brickHeight\2
+	rect solid ink 0 from x,y to x+15,y+brickHeight
+endproc
+
+
