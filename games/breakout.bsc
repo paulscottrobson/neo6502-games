@@ -1,7 +1,10 @@
 '
 '		Breakout. Paul Robson.
 '
-breakThrough = true
+cls:sprite clear
+breakThrough = false
+soundOn = true
+
 call Initialise()
 call NewGame()
 call RedrawFrame()
@@ -52,7 +55,6 @@ endproc
 '		Redraw frame
 '
 proc RedrawFrame()
-	cls:sprite clear
 	rect ink 15 solid from 0,26 to frameWidth,239
 	rect ink 15 solid from 319,26 to 319-frameWidth,239
 	rect ink 15 solid from 0,26 to 319,backWall
@@ -121,6 +123,7 @@ proc MoveBall()
 		call CheckBrick()
 	endif
 	sprite 2 to xBall,yBall
+	if brickRemoved = brickCount & yBall > yCentre(1)-40 then call RedrawFrame()
 endproc
 '
 '		Check hit brick
@@ -140,7 +143,7 @@ endproc
 '		Remove brick
 '
 proc RemoveBrick(x,y)
-	brick(x,y) = 0
+	brick(x,y) = 0:brickRemoved = brickRemoved+1
 	x = x * 16 + frameWidth:y = yCentre(y)-brickHeight\2
 	rect solid ink 0 from x,y to x+15,y+brickHeight
 endproc
