@@ -1,6 +1,7 @@
 '
 '		Breakout. Paul Robson.
 '
+breakThrough = true
 call Initialise()
 call NewGame()
 call RedrawFrame()
@@ -26,7 +27,6 @@ proc Initialise()
 		yCentre(i) = 110-brickHeight*i
 		read colour(i) 
 	next
-	dim score(3)
 	data 13,2,3,12,11,1
 	defchr 192,31,17,17,17,17,17,31
 	defchr 193,1,1,1,1,1,1,1
@@ -45,7 +45,7 @@ endproc
 '
 proc NewGame()
 	local i
-	for i = 1 to 3:score(i) = 0:next
+	score = 0
 	lives = 5:batWidth = 32
 endproc
 '
@@ -68,8 +68,8 @@ endproc
 '		Redraw the score
 '
 proc RedrawScore()
-	local i
-	for i = 1 to 3:call DrawDigit(i+2,score(i)):next
+	local i,a$:a$ = right$("0000"+str$(score),4)
+	for i = 1 to len(a$):call DrawDigit(i+2,asc(mid$(a$,i,1)) - 48):next
 endproc
 '
 '		Redraw the lives count
@@ -82,6 +82,7 @@ endproc
 '
 proc DrawDigit(x,d)
 	x = x * 18
+	rect solid ink blue from x,1 to x+17,21
 	text chr$(d+192) ink 15 dim 3 to x,1
 endproc
 '
@@ -129,7 +130,10 @@ proc CheckBrick()
 	x = (xBall - frameWidth) \ 16
 	y = (yCentre(1)-yBall) \ brickHeight + 1
 	if brick(x,y) <> 0
-		call RemoveBrick(x,y):yiBall = -yiBall
+		call RemoveBrick(x,y)
+		score = (score + 1) % 10000
+		call RedrawScore()
+		if breakThrough=0 then yiBall = -yiBall
 	endif
 endproc
 '
