@@ -1,18 +1,23 @@
 '
 '		Breakout. Paul Robson.
 '
-cls:sprite clear
 breakThrough = false
-soundOn = true
+soundOn = false
 
+cls:sprite clear
 call Initialise()
 call NewGame()
 call RedrawFrame()
 call ResetBat()
-call ResetBall()
 repeat
-	if event(tBat,4) then call MoveBat()
-	if event(tBall,2) then call MoveBall()
+	call ResetBall()
+	tBat = 0:tBall = 0
+	while yBall < 240
+		if event(tBat,4) then call MoveBat()
+		if event(tBall,3) then call MoveBall()
+	wend
+	lives = lives - 1
+	call RedrawLives()
 until lives = 0
 end
 
@@ -108,7 +113,7 @@ endproc
 '
 proc ResetBall()
 	xBall = rand(160)+80:yBall = 200
-	xiBall = 4:yiBall = 4
+	xiBall = 4:yiBall = -4
 	sprite 2 image $80 to xBall,yBall
 endproc
 '
@@ -116,9 +121,9 @@ endproc
 '
 proc MoveBall()
 	xBall = xBall + xiBall:yBall = yBall + yiBall
-	if xBall < frameWidth+3 | xBall >= 317-frameWidth then xiBall = -xiBall
-	if yBall < backWall+3 then yiBall = -yiBall
-	if yBall > 230 then yiBall = -yiBall:xiBall = rand(9)-4
+	if xBall < frameWidth+3 | xBall >= 317-frameWidth then xiBall = -xiBall:call WallSound()
+	if yBall < backWall+3 then yiBall = -yiBall:call WallSound()
+	if yBall > 230 & yBall < 236 then call CheckBat()
 	if yBall <= yCentre(1) & yBall >= yCentre(wallDepth)-brickHeight\2
 		call CheckBrick()
 	endif
@@ -137,6 +142,7 @@ proc CheckBrick()
 		score = (score + 1) % 10000
 		call RedrawScore()
 		if breakThrough=0 then yiBall = -yiBall
+		if soundOn then sound 0 clear:sound 0,200+y*32,80
 	endif
 endproc
 '
@@ -147,5 +153,22 @@ proc RemoveBrick(x,y)
 	x = x * 16 + frameWidth:y = yCentre(y)-brickHeight\2
 	rect solid ink 0 from x,y to x+15,y+brickHeight
 endproc
-
+'
+'		Check hit ball
+'
+proc CheckBat()
+	local xo:xo = xBall - xBat
+	if abs(xo) <= batWidth \ 2
+		yiBall = -yiBall
+		xiBall = sgn(xo) * 2:if xiBall = 0 then xiBall = rand(2)*2-1
+		if abs(xo) >= batWidth \ 4 then xiBall = xiBall * 2
+		if soundOn then sound 0,330,100
+	endif
+endproc
+'
+'		Wall Sound
+'
+proc WallSound()
+	if soundOn then sound 0 clear:sound 0,1700,40
+endproc
 
