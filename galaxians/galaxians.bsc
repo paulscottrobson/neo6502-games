@@ -1,0 +1,4 @@
+cls:sprite clear:gload "galaxians.gfx"
+for i = 0 to 14
+	image i+$80 to i*16+16,32
+next
