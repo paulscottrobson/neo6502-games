@@ -3,8 +3,10 @@ call Initialise()
 call DrawStars()
 call ResetAttackers()
 call Launch(41)
+tMoveForm = 0:tMoveDive = 0
 repeat
-	if event(tMoveForm,20) then call MoveFormation():call AnimateStars()
+	if event(tMoveForm,24) then call MoveFormation():call AnimateStars()
+	if event(tMoveDive,3) then if attCount<>0 then call MoveAttackers()
 until false
 end
 '
@@ -48,7 +50,7 @@ proc ResetAttackers()
 	status(2) = 1:status(5) = 1
 	status(8) = 0:status(9) = 0:status(14) = 0:status(15) = 0
 	status(16) = 0:status(23) = 0
-	xCentre = 160:xCentreStep = 3:attCount = 0:formCount = 0
+	xCentre = 160:xCentreStep = 2:attCount = 0:formCount = 0
 	call MoveFormation()
 endproc
 '
@@ -67,7 +69,7 @@ proc MoveFormation()
 		y = 24 + r * 12
 		for c = 0 to 7
 			if status(p) = 1 then sprite p image img to x,y
-			if status(p) = 2 then if attCount < 8 then attackers(attCount) = p:attCount = attCount + 1
+			if status(p) = 2 then if attCount < 8 then attCount = attCount + 1:attackers(attCount) = p
 			p = p + 1:x = x + 16
 		next
 	next
@@ -83,4 +85,26 @@ proc Launch(n)
 	sprite n image graphics(n\8)+2
 	xiShip(n) = -4
 	if xShip(n) >= 160 then xiShip = abs(xiShip):sprite n flip 1
+endproc
+'
+'		Move attackers.
+'
+proc MoveAttackers()
+	for i = 1 to attCount
+		n = attackers(i)
+		if status(n) = 2 
+			xShip(n) = xShip(n) + xiShip(n)
+			yShip(n) = yShip(n) + 2
+			if xShip(n) < 8 | xShip(n) > 312 then call FlipAttacker(n)
+			sprite n to xShip(n),yShip(n)
+			if yShip(n) > 230 then status(n) = 1
+		endif
+	next
+endproc
+'
+'		Flip attacker horizontally.
+'
+proc FlipAttacker(n)
+	xiShip(n) = -xiShip(n)
+	if xiShip(n) > 0:sprite n flip 1:else:sprite n flip 0:endif
 endproc
