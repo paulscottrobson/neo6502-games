@@ -30,9 +30,14 @@ OBJNAME = $(APPNAME)$(S)$(APPNAME).bas
 
 all:
 
-run : build
+trun : build
 	cd $(APPNAME) ; $(BINDIR)neo$(APPSTEM) $(APPNAME).bas@page  exec
 	$(CDEL) memory.dump 
+
+tneo : build
+	$(CCOPY) $(APPNAME)$(S)$(APPNAME).bsc $(ROOTDIR)$(S)neo6502-firmware$(S)basic$(S)test.bsc
+	$(CCOPY) $(APPNAME)$(S)storage$(S)$(APPNAME).gfx $(ROOTDIR)$(S)neo6502-firmware$(S)basic$(S)storage
+	make -C $(ROOTDIR)$(S)neo6502-firmware$(S)basic tneo
 
 build : $(OBJNAME)
 	cd $(APPNAME) ; $(PYTHON) $(BINDIR)makeimg.zip
@@ -44,7 +49,6 @@ build : $(OBJNAME)
 
 update:
 	$(CCOPY) games$(S)* $(ROOTDIR)$(S)neo6502-firmware$(S)basic$(S)code$(S)games
-
 
 cleargfx:
 	cd $(APPNAME) ; $(PYTHON) $(BINDIR)createblanks.zip
