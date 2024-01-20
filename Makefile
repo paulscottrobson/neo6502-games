@@ -31,7 +31,7 @@ OBJNAME = $(APPNAME)$(S)$(APPNAME).bas
 all:
 
 trun : build
-	cd $(APPNAME) ; $(BINDIR)neo$(APPSTEM) $(APPNAME).bas@page  exec
+	cd $(APPNAME) ; $(BINDIR)neo$(APPSTEM) $(BINDIR)basic.bin@800 $(APPNAME).bas@page  exec
 	$(CDEL) memory.dump 
 
 tneo : build
