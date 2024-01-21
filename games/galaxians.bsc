@@ -1,9 +1,9 @@
 '
 '	Galaxians : by Paul Robson.
 '
-soundOn = false
+soundOn = true
 call Initialise()
-score = 0:lives = 1
+score = 0:lives = 3
 call DrawGame()
 call PlayLevel(1)
 '
@@ -89,7 +89,7 @@ endproc
 proc MoveShip()
 	local fire,dx,dy
 	fire = joypad(dx,dy)
-	if fire <> 0 then if yMissile < 0 then xMissile = xBase:yMissile = yBase-8
+	if fire <> 0 then if yMissile < 0 then xMissile = xBase:yMissile = yBase-8:if soundOn then sound 0 clear:sfx 0,7
 	xBase = min(312,max(8,xBase + dx * 7))
 	sprite 64 image $83 to xBase,yBase
 endproc
@@ -163,7 +163,7 @@ proc MoveAttackers()
 			sprite n to xShip(n),yShip(n)
 			if yShip(n) >= yBase then status(n) = 1:if abs(xShip(n)-xBase) < 11 then isHit = true
 		endif
-	next
+	next	
 endproc
 '
 '		Flip attacker horizontally.
@@ -218,6 +218,7 @@ proc DestroyAlien(n,isAttacking)
 		remaining = remaining - 1:status(n) = 0:sprite n hide
 		score = score + s:call DrawScore():
 		yMissile = -1:sprite 65 hide
+		if soundOn then sound 0 clear:sfx 0,22
 	endif
 endproc
 '
@@ -231,8 +232,8 @@ proc PlayerHit()
 		if status(i) = 2 then status(i) = 1
 	next:call MoveFormation()
 	i = time()+100
+	if soundOn then sfx 0,19
 	repeat	
 		sprite 64 image $8F + (time()-i)\10 % 3
-	until time() > i
-
+	until time() > i & notes(0) = 0
 endproc
