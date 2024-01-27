@@ -49,10 +49,19 @@ endproc
 '
 proc RedrawGame()
 	local i
-	cls:sprite clear:text "000000" ink 7 dim 1 to 222,10
-	call DrawScore()
+	cls:sprite clear:text "000000" solid ink 7 dim 1 to 222,10
 	text "SCORE<1>" to 56,0:text "SCORE<2>" to 216,0:text "HI-SCORE" to 136,0
+	call DrawScore():call DrawLives()
 	for i = 1 to 3:call DrawShield(i*80,190):next
+	sprite 0 image $85 to 160,230
+endproc
+'
+'		Draw lives
+'
+proc DrawLives()
+	local i
+	text str$(lives) solid dim 1 ink 2 to 8,230
+	if lives > 1 then for i = 1 to lives-1:image $85 to i*16+4,228:next
 endproc
 '
 '		Draw the shield
