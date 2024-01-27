@@ -1,0 +1,25 @@
+cls:gload "invaders.gfx":cls:sprite clear
+
+call Initialise()
+call ResetMap()
+tiledraw from 160-13*8,10 to 160+13*8,10+96
+rect ink 1 from 160-13*8,10 to 160+13*8,10+96
+line 160,0 ink 2 to 160,239
+end
+
+proc Initialise()
+	invMap = alloc(13 * 6 + 3)
+	poke invMap,1:poke invMap+1,13:poke invMap+2,6
+	tilemap invMap,0,0
+endproc
+
+proc ResetMap()
+	local a,c,i,x,y
+	for y = 0 to 5
+		a = y * 13 + invMap + 3:c = (y + 1) \ 2:if y = 5 then c = $F8
+		poke a,$F8:poke a+12,$F8
+		for i = 1 to 11:poke a+i,c:next
+	next
+endproc
+
+

@@ -1,0 +1,81 @@
+'
+'	Space Invaiders
+'
+cls:gload "invaders.gfx"
+call Initialise()
+call ResetMap()
+call RedrawGame()
+
+
+repeat
+	if event(tMoveInvaders,moveRate) then call MoveInvaders()	
+	
+until yTop >= 160
+end
+'
+'		The invaders are actually a tilemap, so create it.
+'
+proc Initialise()
+	invMap = alloc(13 * 5 + 3)
+	poke invMap,1:poke invMap+1,13:poke invMap+2,6
+	tilemap invMap,8,0
+	dim rowCount(11)
+	score = 0:highScore = 1000:lives = 3
+endproc
+'
+'		Redraw the score
+'
+proc DrawScore()
+	text right$("000000"+str$(score),6) ink 7 dim 1 solid to 62,10
+	if score = 0 | score = highScore then text right$("000000"+str$(highScore),6) ink 7 dim 1 to 142,10
+endproc
+'
+'		Initialise the invaders map and counts
+'
+proc ResetMap()
+	local a,c,i,x,y	
+	for y = 0 to 4
+		a = y * 13 + invMap + 3:c = (y+1)  \ 2
+		poke a,$F8:poke a+12,$F8
+		for i = 1 to 11:poke a+i,c:next
+	next
+	xLeft = 160 - 13 * 8:yTop = 28:xDirection = 4
+	leftColumn = 1:rightColumn = 11
+	for i = 1 to 11:rowCount(i) = 5:next
+	remaining = 5*11:moveRate = 3+2*remaining
+endproc
+'
+'		Redraw the main game screen
+'
+proc RedrawGame()
+	local i
+	cls:sprite clear:text "000000" ink 7 dim 1 to 222,10
+	call DrawScore()
+	text "SCORE<1>" to 56,0:text "SCORE<2>" to 216,0:text "HI-SCORE" to 136,0
+	for i = 1 to 3:call DrawShield(i*80,190):next
+endproc
+'
+'		Draw the shield
+'
+proc DrawShield(x,y)
+	local i,w,h:w = 50:h = 30
+	rect x-w\2,y ink 2 solid to x+w\2,y+h
+	ellipse ink 0 from x-h\3,y+h-h\3 to x+h\3,y+h+h\3
+	for i = 0 to w\4
+		line x-w\2+i,y-1 to x-w\2,y+i
+		line x+w\2-i,y-1 to x+w\2,y+i
+	next
+endproc
+'
+'		Move all the invaders
+'
+proc MoveInvaders()
+	xLeft = xLeft + xDirection
+	if xLeft + rightColumn * 16 > 303 | xLeft < 0
+		xDirection = -xDirection
+		xLeft = max(min(xLeft,303-rightColumn*16),0)
+		rect ink 0 solid from 0,yTop to 319,yTop+8
+		yTop = yTop + 8
+	endif
+	tiledraw from xLeft,yTop to xLeft+191,yTop+80
+endproc

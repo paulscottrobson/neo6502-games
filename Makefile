@@ -23,7 +23,7 @@ ROOTDIR =  $(dir $(realpath $(lastword $(MAKEFILE_LIST))))..$(S)
 
 BINDIR = $(ROOTDIR)$(S)neo6502-firmware$(S)bin$(S)
 
-APPNAME = galaxians
+APPNAME = invaders
 
 SRCNAME = $(APPNAME)$(S)$(APPNAME).bsc
 OBJNAME = $(APPNAME)$(S)$(APPNAME).bas
@@ -41,7 +41,7 @@ tneo : build
 	$(CCOPY) $(APPNAME)$(S)storage$(S)$(APPNAME).gfx $(ROOTDIR)$(S)neo6502-firmware$(S)basic$(S)storage
 	make -C $(ROOTDIR)$(S)neo6502-firmware$(S)basic tneo
 
-build : $(OBJNAME)
+build : $(OBJNAME) $(GFXNAME)
 
 release: $(ALLAPPS)
 	$(CCOPY) games$(S)* $(ROOTDIR)$(S)neo6502-firmware$(S)basic$(S)code$(S)games
@@ -56,10 +56,11 @@ always:
 	$(CMAKEDIR) storage
 	$(CCOPY) $@ storage
 
-	cd $(*F) ; $(PYTHON) $(BINDIR)makeimg.zip
-	$(CMAKEDIR) $(*F)$(S)storage
-	$(CCOPY) $(*F)$(S)graphics.gfx $(*F)$(S)storage$(S)$(*F).gfx
-	$(CCOPY) $(*F)$(S)graphics.gfx games$(S)$(*F).gfx
-	$(CCOPY) $(*F)$(S)$(*F).b* games
-	$(CDEL) $(*F)$(S)graphics.gfx
+graphics:
+	cd $(APPNAME) ; $(PYTHON) $(BINDIR)makeimg.zip
+	$(CMAKEDIR) $(APPNAME)$(S)storage
+	$(CCOPY) $(APPNAME)$(S)graphics.gfx $(APPNAME)$(S)storage$(S)$(APPNAME).gfx
+	$(CCOPY) $(APPNAME)$(S)graphics.gfx games$(S)$(APPNAME).gfx
+	$(CCOPY) $(APPNAME)$(S)$(APPNAME).b* games
+	$(CDEL) $(APPNAME)$(S)graphics.gfx
 
