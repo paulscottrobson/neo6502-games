@@ -1,17 +1,31 @@
 '
-'	Space Invaiders
+'		*** Space Invaders ***
 '
 cls:gload "invaders.gfx"
 call Initialise()
-call ResetMap()
-call RedrawGame()
 
-
+call ResetMap():call RedrawGame():call ResetBullets():call RepaintInvaders()
 repeat
-	if event(tMoveInvaders,moveRate) then call MoveInvaders()	
-	
-until yTop >= 160
+	call PlayLevel()
+until lives = 0
 end
+'
+'		Play/Continue the current level
+'
+proc PlayLevel()
+	dead = false
+	tMoveInvaders = 0:tMovePlayer = 0:tMoveBullets = 0
+	repeat
+		if event(tMoveInvaders,moveRate) then call MoveInvaders():call RepaintInvaders():sprite 10 hide
+		if event(tMovePlayer,3) then call MovePlayer()
+		if event(tMoveBullets,3)
+			if yPBullet > -20 then call MovePlayerBullet()
+		endif
+	until dead|remaining = 0
+	if remaining = 0 then call ResetMap():call RedrawGame():call ResetBullets():call RepaintInvaders()
+	if dead then lives = lives - 1
+	if lives > 0 then call Delay(200)
+endproc
 '
 '		The invaders are actually a tilemap, so create it.
 '
@@ -19,8 +33,9 @@ proc Initialise()
 	invMap = alloc(13 * 5 + 3)
 	poke invMap,1:poke invMap+1,13:poke invMap+2,6
 	tilemap invMap,8,0
-	dim rowCount(11)
-	score = 0:highScore = 1000:lives = 3
+	dim colAlive(11)
+	score = 0:highScore = 1000:lives = 3:level = 0
+	xPlayer = 160
 endproc
 '
 '		Redraw the score
@@ -39,10 +54,11 @@ proc ResetMap()
 		poke a,$F8:poke a+12,$F8
 		for i = 1 to 11:poke a+i,c:next
 	next
-	xLeft = 160 - 13 * 8:yTop = 28:xDirection = 4
+	xLeft = 160 - 13 * 8:yTop = 28+level*6:xDirection = 4
 	leftColumn = 1:rightColumn = 11
-	for i = 1 to 11:rowCount(i) = 5:next
+	for i = 1 to 11:colAlive(i) = $1F:next
 	remaining = 5*11:moveRate = 3+2*remaining
+	level = (level+1) % 10
 endproc
 '
 '		Redraw the main game screen
@@ -52,8 +68,18 @@ proc RedrawGame()
 	cls:sprite clear:text "000000" solid ink 7 dim 1 to 222,10
 	text "SCORE<1>" to 56,0:text "SCORE<2>" to 216,0:text "HI-SCORE" to 136,0
 	call DrawScore():call DrawLives()
-	for i = 1 to 3:call DrawShield(i*80,190):next
-	sprite 0 image $85 to 160,230
+	for i = 1 to 3:call DrawShield(i*80,180):next
+	sprite 0 image $85 to xPlayer,230
+endproc
+'
+'		Move Player
+'
+proc MovePlayer()
+	local fire,dx,dy
+	fire = joypad(dx,dy)
+	xPlayer = max(0,min(319,xPlayer+dx*6))
+	sprite 0 to xPlayer,230
+	if yPBullet < 0 then if fire then xPBullet = xPlayer:yPBullet = 230-8
 endproc
 '
 '		Draw lives
@@ -84,7 +110,63 @@ proc MoveInvaders()
 		xDirection = -xDirection
 		xLeft = max(min(xLeft,303-rightColumn*16),0)
 		rect ink 0 solid from 0,yTop to 319,yTop+8
-		yTop = yTop + 8
+		yTop = yTop + 8:if yTop > 170 then dead = true
 	endif
+endproc
+'
+' 		Repaint the tile map
+'
+proc RepaintInvaders()
 	tiledraw from xLeft,yTop to xLeft+191,yTop+80
+endproc
+'
+'		Reset Bullets
+'
+proc ResetBullets()
+	sprite 9 hide:xPBullet = 0:yPBullet = -99
+endproc
+'
+'		Move Player Bullet
+'
+proc MovePlayerBullet()
+	yPBullet = yPBullet - 4
+	if yPBullet > 180 then if point(xPBullet,yPBullet) = 2 then call BreakShield(xPBullet,yPBullet+3):yPBullet = -99
+	if yPBullet > xTop & yPBullet < yTop+80 
+		local row,col,pos
+		row = (yPBullet - yTop) >> 4
+		col = (xPBullet - xLeft + 4) >> 4
+		pos = (xPBullet - xLeft + 4) & 15
+		if col >= 1 & col <= 11 & pos <= 12
+			mask = 1 << (row)
+			if (colAlive(col) & mask) <> 0 
+				colAlive(col) = colAlive(col)-mask
+				sprite 10 image $86 to xLeft+col*16,yTop+row*16+8
+				call DeleteAlien(col,row)
+				score = score + (6-row)\2*10:call DrawScore()
+				yPBullet = -99	
+			endif
+		endif
+	endif
+	sprite 9 image $80 to xPBullet,yPBullet
+endproc
+'
+'		Hit shields
+'
+proc BreakShield(x,y)
+	ellipse from x-5,y-5 ink 0 solid to x+5,y+5
+endproc
+'
+'		Delete Alien
+'
+proc DeleteAlien(x,y)
+	poke invMap+3+x+y*13,$F8
+	remaining = remaining - 1
+	call RepaintInvaders()
+endproc	
+'
+'		Delay n cs
+'
+proc Delay(n)
+	n = time()+n
+	repeat:until time() > n
 endproc
