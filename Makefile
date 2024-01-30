@@ -1,3 +1,15 @@
+# ***************************************************************************************
+# ***************************************************************************************
+#
+#		Name : 		Makefile
+#		Author :	Paul Robson (paul@robsons.org.uk)
+#		Date : 		30th January 2024
+#		Reviewed :	No
+#		Purpose :	Graphics build
+#
+# ***************************************************************************************
+# ***************************************************************************************
+
 ifeq ($(OS),Windows_NT)
 CCOPY = copy
 CMAKE = make
@@ -27,10 +39,13 @@ APPNAME = invaders
 
 SRCNAME = $(APPNAME)$(S)$(APPNAME).bsc
 OBJNAME = $(APPNAME)$(S)$(APPNAME).bas
+GFXNAME = $(APPNAME)$(S)$(APPNAME).gfx
 
 ALLAPPS = $(wildcard */*.bas)
+ALLSRC = $(wildcard */*.bsc)
+ALLGFX = $(wildcard */*.gfx */*/*.gfx)
 
-all:
+all: release
 
 trun : build
 	cd $(APPNAME) ; $(BINDIR)neo$(APPSTEM) $(BINDIR)basic.bin@800 $(APPNAME).bas@page  exec
@@ -41,26 +56,27 @@ tneo : build
 	$(CCOPY) $(APPNAME)$(S)storage$(S)$(APPNAME).gfx $(ROOTDIR)$(S)neo6502-firmware$(S)basic$(S)storage
 	make -C $(ROOTDIR)$(S)neo6502-firmware$(S)basic tneo
 
-build : $(OBJNAME) $(GFXNAME)
+build : $(OBJNAME)
 
-release: $(ALLAPPS)
-	$(CCOPY) games$(S)* $(ROOTDIR)$(S)neo6502-firmware$(S)basic$(S)code$(S)games
+release: 
+	make -B $(ALLAPPS)
+	$(CDEL) $(ROOTDIR)neo6502-firmware$(S)basic$(S)code$(S)games$(S)*.*
+	$(CCOPY) $(ALLAPPS) $(ALLSRC) $(ALLGFX) $(ROOTDIR)neo6502-firmware$(S)basic$(S)code$(S)games
+	$(CCOPY) $(ALLAPPS) $(ALLSRC) $(ALLGFX) $(ROOTDIR)neo6502-firmware$(S)basic$(S)storage
+	$(CCOPY) $(ALLAPPS) $(ALLSRC) $(ALLGFX) $(ROOTDIR)neo6502-firmware$(S)emulator$(S)storage
 
 cleargfx:
 	cd $(APPNAME) ; $(PYTHON) $(BINDIR)createblanks.zip
 	
-always:
 
-%.bas : %.bsc always
+%.bas : %.bsc
 	$(PYTHON) $(BINDIR)makebasic.zip $< -o$@
+	$(CDEL) $(F)$(S)*.gfx
+	$(CDEL) $(F)$(S)storage$(S)*.gfx
+	cd $(*F) ; $(PYTHON) $(BINDIR)makeimg.zip
 	$(CMAKEDIR) storage
-	$(CCOPY) $@ storage
+	$(CCOPY) $(*F)$(S)graphics.gfx $(*F)$(S)storage$(S)$(*F).gfx
+	$(CDEL) $(*F)$(S)graphics.gfx
 
-graphics:
-	cd $(APPNAME) ; $(PYTHON) $(BINDIR)makeimg.zip
-	$(CMAKEDIR) $(APPNAME)$(S)storage
-	$(CCOPY) $(APPNAME)$(S)graphics.gfx $(APPNAME)$(S)storage$(S)$(APPNAME).gfx
-	$(CCOPY) $(APPNAME)$(S)graphics.gfx games$(S)$(APPNAME).gfx
-	$(CCOPY) $(APPNAME)$(S)$(APPNAME).b* games
-	$(CDEL) $(APPNAME)$(S)graphics.gfx
+
 
