@@ -89,7 +89,7 @@ proc MovePlayer()
 	fire = joypad(dx,dy)
 	xPlayer = max(0,min(319,xPlayer+dx*6))
 	sprite 0 to xPlayer,230
-	if yPBullet < 0 then if fire then xPBullet = xPlayer:yPBullet = 230-8
+	if yPBullet < 0 then if fire then xPBullet = xPlayer:yPBullet = 230-8:sfx 0,22
 endproc
 '
 '		Draw lives
@@ -122,6 +122,8 @@ proc MoveInvaders()
 		xLeft = max(min(xLeft,303-rightColumn*16),0)
 		rect ink 0 solid from 0,yTop to 319,yTop+8
 		yTop = yTop + 8:if yTop > 170 then dead = true
+		if sfxPitch = 100:sfxPitch = 200:else:sfxPitch = 100:endif
+		sound 0 clear:sound 0,sfxPitch,8
 	endif
 endproc
 '
@@ -176,7 +178,8 @@ proc DeleteAlien(x,y)
 	poke invMap+3+x+y*13,$F8
 	remaining = remaining - 1
 	call RepaintInvaders()
-endproc	
+	sfx 0,21
+	endproc	
 '
 '		Delay n cs
 '
@@ -196,6 +199,7 @@ proc CheckInvaderFire()
 		while n <> 0:row = row + 1:n = n >> 1:wend
 		xBullet(currentCheck) = xLeft + col * 16
 		yBullet(currentCheck) = yTop + row * 16
+		sfx 0,23
 	endif
 endproc
 '
@@ -208,7 +212,7 @@ proc MoveInvaderBullets()
 			yBullet(i) = yBullet(i)+4
 			if point(xBullet(i),yBullet(i)) = 2 then call BreakShield(xBullet(i),yBullet(i)):yBullet(i) = -99
 			if yBullet(i) > 235 then yBullet(i) = -99
-			if yBullet(i) > 224 then if abs(xBullet(i)-xPlayer) < 6 then dead = true
+			if yBullet(i) > 224 then if abs(xBullet(i)-xPlayer) < 6 then dead = true:sfx 0,19
 			sprite i image ($80+(yBullet(i) >> 2) & 3) to xBullet(i),yBullet(i)
 		endif
 	next
