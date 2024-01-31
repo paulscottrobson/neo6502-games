@@ -35,7 +35,7 @@ ROOTDIR =  $(dir $(realpath $(lastword $(MAKEFILE_LIST))))..$(S)
 
 BINDIR = $(ROOTDIR)$(S)neo6502-firmware$(S)bin$(S)
 
-APPNAME = invaders
+APPNAME = frogger
 
 SRCNAME = $(APPNAME)$(S)$(APPNAME).bsc
 OBJNAME = $(APPNAME)$(S)$(APPNAME).bas
