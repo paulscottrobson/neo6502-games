@@ -8,7 +8,7 @@ repeat
 	call ResetPlayer()
 	tPlayer = 0
 	repeat
-		if event(tPlayer,4) then call MovePlayer()
+		if event(tPlayer,6) then call MovePlayer()
 		call AnimateLane()
 	until complete | dead
 	if dead
@@ -38,8 +38,8 @@ proc Initialise()
 		read speed(i),direction(i)
 	next
 	mapMask = 16*mapSize-1
-	data 6,1, 	5,-1, 	5,1, 	5,-3, 	7,1
-	data 7,1, 	6,-1, 	5,-2, 	5,1,	6,-2
+	data 6,1, 	5,-1, 	4,1, 	5,-3, 	7,1
+	data 7,1, 	6,-1, 	4,-2, 	5,1,	6,-2
 endproc
 '
 '		Reset the level
@@ -59,7 +59,7 @@ endproc
 '
 proc ResetPlayer()
 	local i
-	xPlayer = 160:yPlayer = yPos(0)+16:yLane = 0:movesLeft = 0
+	xPlayer = 160:yPlayer = yPos(5)+16:yLane = 0:movesLeft = 0
 	xIncrement = 0:yIncrement = 0:cGraphic = $80
 	sprite 0 image cGraphic to xPlayer,yPlayer+8
 	complete = False:dead = False
@@ -75,6 +75,7 @@ proc AnimateLane()
 		tilemap maps(lane),xPos(lane),0
 		tiledraw 0,yPos(lane) to 320,yPos(lane)+16
 		xPos(lane) = (xPos(lane) + direction(lane)) & mapMask
+		if lane = yLane then if dead = 0 then xPlayer = xPlayer - direction(lane):sprite 0 to xPlayer,yPlayer+8
 	endif
 endproc
 '
@@ -85,12 +86,13 @@ proc MovePlayer()
 	if movesLeft = 0
 		t = joypad(dx,dy):xIncrement = 0:yIncrement = 0
 		cGraphic = cGraphic & $FE
-		if dy <> 0 then yIncrement = dy*2:cGraphic = (dy+1)+$81
-		if dy = 0 & dx <> 0 then xIncrement = dx*2:cGraphic = (dx+1)+$85
+		if dy <> 0 then yIncrement = dy*4:cGraphic = (dy+1)+$81
+		if dy = 0 & dx <> 0 then xIncrement = dx*4:cGraphic = (dx+1)+$85
 		if yIncrement < 0 then score = score+10:call DrawScore()
-		if xIncrement|yIncrement then movesLeft = 8
+		if xIncrement|yIncrement then movesLeft = 4
 	endif
 	xPlayer = xPlayer + xIncrement:yPlayer = yPlayer+yIncrement
+	if xPlayer < 8  | xPlayer > 312 then dead = true
 	if movesLeft > 0 then movesLeft = movesLeft-1
 	sprite 0 image cGraphic to xPlayer,yPlayer+8
 	yLane = (yPos(0)-yPlayer+24) >> 4
