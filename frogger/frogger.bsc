@@ -3,41 +3,105 @@
 '
 cls:sprite clear:gload "frogger.gfx"
 call Initialise()
-for i = 0 to 9:call CreateMap(maps(i)+3,i):next
-for i = 0 to 9:xPos(i) = rand(64):timer(i) = 0:next
-rect solid ink 5 from 0,223 to 319,223-7*16
-rect solid ink 4 from 0,0 to 319,32
-rect solid ink 2 from 0,16 to 319,64
-text "1-UP" frame ink 7 to 148,0
-text "000000" frame ink 1 to 142,8
-for i = 0 to 4:x = (i+1)*320\6:rect solid ink 4 from x-10,18 to x+10,64:next
-for i = 0 to 2:image $80 to i * 20 + 4,224:next
-sprite 0 image $80 to 160,216
+call ResetLevel()
 repeat
-	t = t + 1:if t = 10 then t = 0
-	if event(timer(t),speed(t)) 
-		tilemap maps(t),xPos(t),0
-		tiledraw 0,yPos(t) to 320,yPos(t)+16
-		xPos(t) = (xPos(t) + direction(t)) & mapMask
+	call ResetPlayer()
+	tPlayer = 0
+	repeat
+		if event(tPlayer,4) then call MovePlayer()
+		call AnimateLane()
+	until complete | dead
+	if dead
+		t1 = time()
+		repeat
+			call AnimateLane()
+			sprite 0 image rand(8)+$80
+		until time() > t1+100
+		lives = lives - 1
+	else
+		level = level + 1:call ResetLevel()
 	endif
-until false
-end
+until lives = 0
+cls:end
 '
 '		Initialise game
 '
 proc Initialise()
 	local i
+	score = 0:lives = 3:level = 1
 	dim maps(9),xPos(9),speed(9),timer(9),yPos(9),direction(9):mapSize = 64
+	dim xHome(4),turtlePos(32),turtleSize(32),turtleCycle(32)
 	for i = 0 to 9
 		maps(i) = alloc(mapSize * 2 + 3)
 		poke maps(i),1:poke maps(i)+1,mapSize * 2:poke maps(i)+2,1
 		yPos(i) = (9-i)*16+48:if i >= 5 then yPos(i) = yPos(i) - 16
 		read speed(i),direction(i)
 	next
-
 	mapMask = 16*mapSize-1
-	data 6,1, 	5,-1, 	5,1, 	4,-3, 	9,1
-	data 7,1, 	6,-1, 	4,-1, 	5,1,	6,-2
+	data 6,1, 	5,-1, 	5,1, 	5,-3, 	7,1
+	data 7,1, 	6,-1, 	5,-2, 	5,1,	6,-2
+endproc
+'
+'		Reset the level
+'
+proc ResetLevel()
+	local i
+	for i = 0 to 9:call CreateMap(maps(i)+3,i):next
+	for i = 0 to 9:xPos(i) = rand(64):timer(i) = 0:next
+	rect solid ink 5 from 0,223 to 319,223-7*16
+	rect solid ink 4 from 0,0 to 319,32
+	rect solid ink 2 from 0,16 to 319,64
+	text "1-UP" frame ink 7 to 148,0:call DrawScore()
+	for i = 0 to 4:xHome(i) = (i+1)*320\6:rect solid ink 4 from xHome(i)-10,18 to xHome(i)+10,64:next
+endproc
+'
+'		Reset the Player
+'
+proc ResetPlayer()
+	local i
+	xPlayer = 160:yPlayer = yPos(0)+16:yLane = 0
+	xIncrement = 0:yIncrement = 0:cGraphic = $80
+	sprite 0 image cGraphic to xPlayer,yPlayer+8
+	complete = False:dead = False
+	rect solid ink 0 from 0,224 to 319,239
+	for i = 0 to lives-1:image $80 to i * 20 + 4,224:next
+endproc
+'
+'		Animate the next lane
+'
+proc AnimateLane()
+	lane = lane + 1:if lane = 10 then lane = 0
+	if event(timer(lane),speed(lane)) 
+		tilemap maps(lane),xPos(lane),0
+		tiledraw 0,yPos(lane) to 320,yPos(lane)+16
+		xPos(lane) = (xPos(lane) + direction(lane)) & mapMask
+	endif
+endproc
+'
+'		Move the player
+'
+proc MovePlayer()
+	local t,dx,dy
+	if ((xPlayer|yPlayer) & 15) = 0
+		t = joypad(dx,dy):xIncrement = 0:yIncrement = 0
+		cGraphic = cGraphic & $FE
+		if dy <> 0 then yIncrement = dy*2:cGraphic = (dy+1)+$81
+		if dy = 0 & dx <> 0 then xIncrement = dx*2:cGraphic = (dx+1)+$85
+		if yIncrement < 0 then score = score+10:call DrawScore()
+	endif
+	xPlayer = xPlayer + xIncrement:yPlayer = yPlayer+yIncrement
+	sprite 0 image cGraphic to xPlayer,yPlayer+8
+	yLane = (yPos(0)-yPlayer+24) >> 4
+	if yLane <> 0 & yLane <> 6 & yLane <> 12
+		yLane = yLane - 1:if yLane > 5 then yLane = yLane - 1
+		dx = ((xPlayer+xPos(yLane)) >> 4) 
+		t = peek(maps(yLane)+3+dx)
+		if yLane < 5
+			if t <> 248 then dead = true
+		else
+			if t = 244 then dead = true
+		endif
+	endif
 endproc
 '
 '		Create a single map.
@@ -58,6 +122,7 @@ endproc
 '
 proc CreateElement(row)
 	local i
+	turtleCount = 0
 	if row < 5
 		call WriteElement(pos,row):pos = pos + 1
 		if row = 4 then call WriteElement(pos,5):pos = pos + 1
@@ -65,8 +130,12 @@ proc CreateElement(row)
 		if row = 5 | row = 8
 			for i = 1 to rand(2)+2:call WriteElement(pos,9):pos = pos + 1:next
 		else
+			turtleCount = turtleCount+1
+			turtlePos(turtleCount) = pos
+			turtleSize(turtleCount) = rand(3)+1
+			turtleCycle(turtleCount) = 0
 			call WriteElement(pos,6):pos = pos + 1
-			for i = 1 to rand(3)+1:call WriteElement(pos,7):pos = pos + 1:next
+			for i = 1 to turtleSize(turtleCount):call WriteElement(pos,7):pos = pos + 1:next			
 			call WriteElement(pos-1,8)
 		endif
 	endif
@@ -74,4 +143,10 @@ endproc
 '
 proc WriteElement(p,c)
 	if p < mapSize then poke map+p,c:poke map+p+mapSize,c
+endproc
+'
+'		Paint the score
+'
+proc DrawScore()
+	text right$("000000"+str$(score),6) solid ink 1 to 142,8
 endproc
