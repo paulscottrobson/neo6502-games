@@ -59,7 +59,7 @@ endproc
 '
 proc ResetPlayer()
 	local i
-	xPlayer = 160:yPlayer = yPos(0)+16:yLane = 0
+	xPlayer = 160:yPlayer = yPos(0)+16:yLane = 0:movesLeft = 0
 	xIncrement = 0:yIncrement = 0:cGraphic = $80
 	sprite 0 image cGraphic to xPlayer,yPlayer+8
 	complete = False:dead = False
@@ -82,14 +82,16 @@ endproc
 '
 proc MovePlayer()
 	local t,dx,dy
-	if ((xPlayer|yPlayer) & 15) = 0
+	if movesLeft = 0
 		t = joypad(dx,dy):xIncrement = 0:yIncrement = 0
 		cGraphic = cGraphic & $FE
 		if dy <> 0 then yIncrement = dy*2:cGraphic = (dy+1)+$81
 		if dy = 0 & dx <> 0 then xIncrement = dx*2:cGraphic = (dx+1)+$85
 		if yIncrement < 0 then score = score+10:call DrawScore()
+		if xIncrement|yIncrement then movesLeft = 8
 	endif
 	xPlayer = xPlayer + xIncrement:yPlayer = yPlayer+yIncrement
+	if movesLeft > 0 then movesLeft = movesLeft-1
 	sprite 0 image cGraphic to xPlayer,yPlayer+8
 	yLane = (yPos(0)-yPlayer+24) >> 4
 	if yLane <> 0 & yLane <> 6 & yLane <> 12
@@ -101,6 +103,8 @@ proc MovePlayer()
 		else
 			if t = 244 then dead = true
 		endif
+	else 
+		yLane = -1
 	endif
 endproc
 '
