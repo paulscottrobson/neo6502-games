@@ -46,6 +46,7 @@ endproc
 '
 proc ResetLevel()
 	local i
+	cls:sprite clear
 	for i = 0 to 9:call CreateMap(maps(i)+3,i):next
 	for i = 0 to 9:xPos(i) = rand(64):timer(i) = 0:next
 	rect solid ink 5 from 0,223 to 319,223-7*16
@@ -53,18 +54,20 @@ proc ResetLevel()
 	rect solid ink 2 from 0,16 to 319,64
 	text "1-UP" frame ink 7 to 148,0:call DrawScore()
 	for i = 0 to 4:xHome(i) = (i+1)*320\6:rect solid ink 4 from xHome(i)-10,18 to xHome(i)+10,64:next
+	freeHomes = 5:complete = False
 endproc
 '
 '		Reset the Player
 '
 proc ResetPlayer()
-	local i
-	xPlayer = 160:yPlayer = yPos(5)+16:yLane = 0:movesLeft = 0
+	local i,dx,dy
+	xPlayer = 160:yPlayer = yPos(0)+16:yLane = 0:movesLeft = 0
 	xIncrement = 0:yIncrement = 0:cGraphic = $80
 	sprite 0 image cGraphic to xPlayer,yPlayer+8
-	complete = False:dead = False
+	dead = False
 	rect solid ink 0 from 0,224 to 319,239
 	for i = 0 to lives-1:image $80 to i * 20 + 4,224:next
+	repeat:i = joypad(dx,dy):until dx|dy = 0
 endproc
 '
 '		Animate the next lane
@@ -75,7 +78,7 @@ proc AnimateLane()
 		tilemap maps(lane),xPos(lane),0
 		tiledraw 0,yPos(lane) to 320,yPos(lane)+16
 		xPos(lane) = (xPos(lane) + direction(lane)) & mapMask
-		if lane = yLane then if dead = 0 then xPlayer = xPlayer - direction(lane):sprite 0 to xPlayer,yPlayer+8
+		if lane = yLane then if dead = 0 & yLane > 4 then xPlayer = xPlayer - direction(lane):sprite 0 to xPlayer,yPlayer+8
 	endif
 endproc
 '
@@ -106,6 +109,7 @@ proc MovePlayer()
 			if t = 244 then dead = true
 		endif
 	else 
+		if yLane = 12 then call CheckHome()
 		yLane = -1
 	endif
 endproc
@@ -155,4 +159,20 @@ endproc
 '
 proc DrawScore()
 	text right$("000000"+str$(score),6) solid ink 1 to 142,8
+endproc
+'
+'		Check Reached Home
+'
+proc CheckHome()
+	local i,ok:ok = false
+	for i = 0 to 4
+		if abs(xPlayer-xHome(i)) < 16
+			image $80 frame to xHome(i)-8,yPos(9)-16:ok = true
+			freeHomes = freeHomes-1:xHome(i) = -999
+			score = score + 50:call DrawScore()	
+			if freeHomes = 0 then complete = true
+			call ResetPlayer()
+		endif
+	next
+	if ok = 0 then dead = true
 endproc
