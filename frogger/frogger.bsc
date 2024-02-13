@@ -6,9 +6,11 @@ call Initialise()
 call ResetLevel()
 repeat
 	call ResetPlayer()
-	tPlayer = 0
+	tPlayer = 0:tTurtle = 0:currTurtle = 1
+	tSpeed = max(12,25-level*2):sAdjust = max(3-level\2,-2)
 	repeat
 		if event(tPlayer,6) then call MovePlayer()
+		if event(tTurtle,tSpeed) then call ProcessTurtle()
 		call AnimateLane()
 	until complete | dead
 	if dead
@@ -28,9 +30,11 @@ cls:end
 '
 proc Initialise()
 	local i
-	score = 0:lives = 3:level = 1
+	score = 0:lives = 3:level = 11
 	dim maps(9),xPos(9),speed(9),timer(9),yPos(9),direction(9):mapSize = 64
-	dim xHome(4),turtlePos(32),turtleSize(32),turtleCycle(32)
+	dim xHome(4),turtlePos(32),turtleSize(32)
+	turtleActive = 6:dim turtleID(turtleActive),turtleState(turtleActive)
+	for i = 1 to turtleActive:turtleID(i) = -1:next
 	for i = 0 to 9
 		maps(i) = alloc(mapSize * 2 + 3)
 		poke maps(i),1:poke maps(i)+1,mapSize * 2:poke maps(i)+2,1
@@ -47,12 +51,15 @@ endproc
 proc ResetLevel()
 	local i
 	cls:sprite clear
+	turtleCount = 0:t1 = time()+200:cls
+	text "Level" dim 2 ink 3 to 110,112:text str$(level) dim 4 ink 6 to 180,104
 	for i = 0 to 9:call CreateMap(maps(i)+3,i):next
+	repeat:until time() > t1
 	for i = 0 to 9:xPos(i) = rand(64):timer(i) = 0:next
 	rect solid ink 5 from 0,223 to 319,223-7*16
 	rect solid ink 4 from 0,0 to 319,32
 	rect solid ink 2 from 0,16 to 319,64
-	text "1-UP" frame ink 7 to 148,0:call DrawScore()
+	text "1-UP" dim 1 frame ink 7 to 148,0:call DrawScore()
 	for i = 0 to 4:xHome(i) = (i+1)*320\6:rect solid ink 4 from xHome(i)-10,18 to xHome(i)+10,64:next
 	freeHomes = 5:complete = False
 endproc
@@ -74,7 +81,7 @@ endproc
 '
 proc AnimateLane()
 	lane = lane + 1:if lane = 10 then lane = 0
-	if event(timer(lane),speed(lane)) 
+	if event(timer(lane),speed(lane)+sAdjust) 
 		tilemap maps(lane),xPos(lane),0
 		tiledraw 0,yPos(lane) to 320,yPos(lane)+16
 		xPos(lane) = (xPos(lane) + direction(lane)) & mapMask
@@ -132,20 +139,18 @@ endproc
 '
 proc CreateElement(row)
 	local i
-	turtleCount = 0
 	if row < 5
 		call WriteElement(pos,row):pos = pos + 1
 		if row = 4 then call WriteElement(pos,5):pos = pos + 1
 	else
 		if row = 5 | row = 8
-			for i = 1 to rand(2)+2:call WriteElement(pos,9):pos = pos + 1:next
-		else
 			turtleCount = turtleCount+1
-			turtlePos(turtleCount) = pos
-			turtleSize(turtleCount) = rand(3)+1
-			turtleCycle(turtleCount) = 0
+			turtlePos(turtleCount) = pos+map
+			turtleSize(turtleCount) = rand(2)+2
+			for i = 1 to turtleSize(turtleCount):call WriteElement(pos,9):pos = pos + 1:next
+		else
 			call WriteElement(pos,6):pos = pos + 1
-			for i = 1 to turtleSize(turtleCount):call WriteElement(pos,7):pos = pos + 1:next			
+			for i = 1 to rand(3)+1:call WriteElement(pos,7):pos = pos + 1:next			
 			call WriteElement(pos-1,8)
 		endif
 	endif
@@ -175,4 +180,46 @@ proc CheckHome()
 		endif
 	next
 	if ok = 0 then dead = true
+endproc
+'
+'		Animate turtle
+'
+proc ProcessTurtle()
+	if turtleID(currTurtle) < 0 
+		call SelectTurtle()
+	else
+		call AnimateOneTurtle()
+	endif
+	currTurtle = currTurtle+1
+	if currTurtle > turtleActive then currTurtle = 1
+endproc
+'
+'		Select a new turtle
+'
+proc SelectTurtle()
+	local i,j,ok
+	repeat
+		j = rand(turtleCount)+1
+		ok = True
+		for i = 1 to turtleActive
+			if turtleID(i) = j then ok = false
+		next
+	until ok
+	turtleID(currTurtle) = j
+	turtleState(currTurtle) = 0
+endproc
+'
+'		Animate a turtle
+'
+proc AnimateOneTurtle()
+	local i,j,pos,gfx
+	i = turtleID(currTurtle)
+	turtleState(currTurtle) = turtleState(currTurtle)+1
+	pos = turtlePos(i):
+	gfx = turtleState(currTurtle):if gfx > 3 then gfx = 8-gfx
+	if gfx > 3:gfx = $F4:else:gfx = gfx+9:endif
+	for j = 0 to turtleSize(i)-1
+		poke pos+j,gfx:poke pos+mapSize+j,gfx
+	next
+	if gfx = 9 then turtleID(currTurtle) = -1
 endproc

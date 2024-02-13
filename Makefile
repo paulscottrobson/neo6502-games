@@ -60,8 +60,8 @@ build : $(OBJNAME)
 
 release: 
 	make -B $(ALLAPPS)
-	$(CDEL) $(ROOTDIR)neo6502-firmware$(S)basic$(S)code$(S)games$(S)*.*
-	$(CCOPY) $(ALLAPPS) $(ALLSRC) $(ALLGFX) $(ROOTDIR)neo6502-firmware$(S)basic$(S)code$(S)games
+	$(CDEL) $(ROOTDIR)neo6502-firmware$(S)examples$(S)code$(S)games$(S)*.*
+	$(CCOPY) $(ALLAPPS) $(ALLSRC) $(ALLGFX) $(ROOTDIR)neo6502-firmware$(S)examples$(S)basic$(S)games
 	$(CCOPY) $(ALLAPPS) $(ALLSRC) $(ALLGFX) $(ROOTDIR)neo6502-firmware$(S)basic$(S)storage
 	$(CCOPY) $(ALLAPPS) $(ALLSRC) $(ALLGFX) $(ROOTDIR)neo6502-firmware$(S)emulator$(S)storage
 
