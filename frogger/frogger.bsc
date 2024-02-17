@@ -30,7 +30,7 @@ cls:end
 '
 proc Initialise()
 	local i
-	score = 0:lives = 3:level = 11
+	score = 0:lives = 3:level = 1
 	dim maps(9),xPos(9),speed(9),timer(9),yPos(9),direction(9):mapSize = 64
 	dim xHome(4),turtlePos(32),turtleSize(32)
 	turtleActive = 6:dim turtleID(turtleActive),turtleState(turtleActive)
@@ -99,7 +99,7 @@ proc MovePlayer()
 		if dy <> 0 then yIncrement = dy*4:cGraphic = (dy+1)+$81
 		if dy = 0 & dx <> 0 then xIncrement = dx*4:cGraphic = (dx+1)+$85
 		if yIncrement < 0 then score = score+10:call DrawScore()
-		if xIncrement|yIncrement then movesLeft = 4
+		if xIncrement|yIncrement then movesLeft = 4:sound 0,220,10,15
 	endif
 	xPlayer = xPlayer + xIncrement:yPlayer = yPlayer+yIncrement
 	if xPlayer < 8  | xPlayer > 312 then dead = true
@@ -177,6 +177,7 @@ proc CheckHome()
 			score = score + 50:call DrawScore()	
 			if freeHomes = 0 then complete = true
 			call ResetPlayer()
+			sfx 0,8
 		endif
 	next
 	if ok = 0 then dead = true
