@@ -1,0 +1,5 @@
+'
+'		*** Asteroids ***
+'
+cls:gload "asteroids.gfx"
+
