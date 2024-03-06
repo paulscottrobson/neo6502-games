@@ -19,3 +19,4 @@ all:
 	make -B -C invaders
 	make -B -C numbergrab
 	make -B -C squash
+
