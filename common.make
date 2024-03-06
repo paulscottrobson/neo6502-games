@@ -70,4 +70,5 @@ release:
 cleargfx:
 	$(PYTHON) $(BINDIR)createblanks.zip
 	
-
+update:
+	cd .. ; git add * ; git add * -u ; git commit -m "Update" ; git push origin master

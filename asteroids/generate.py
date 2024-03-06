@@ -19,6 +19,7 @@ class Sprite(object):
 	def line(self,x1,y1,x2,y2):
 		steps = round(math.sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2)))
 		steps = steps if steps > 0 else 1
+		steps *= 2
 		for i in range(0,steps+1):
 			x = (x2-x1)*i/steps+x1
 			y = (y2-y1)*i/steps+y1
@@ -96,6 +97,8 @@ class Sprite(object):
 print("[Sprite:16x16]")
 for i in range(0,8):
 	Sprite().rock(7,i).render(16)
+for i in range(0,8):
+	Sprite().rock(4,i+50).render(16)
 for a in range(0,32):
 	Sprite().rot(a * 360 / 32).ship().render(16)
 for m in [0x3F,0x0C,0x76,0x5E,0x4D,0x5B,0x7B,0x0E,0x7F,0x5F]:

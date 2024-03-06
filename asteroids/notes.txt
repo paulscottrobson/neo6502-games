@@ -1,0 +1,30 @@
+Graphic
+=======
+16x16
+
+0..7 	Medium
+8..15 	Small
+16..47	32th of 360 degree rotations of ship
+48..57 	Digits 0-9
+58 		Missile
+59 		Ship
+
+32x32
+
+0..7 	Large
+
+Record
+======
+0,1 	Sprite Graphic number ($00 if not in use) $80-$FF
+2,3 	X Position 	(256th fraction 0-119)
+4,5 	X Increment (256th fraction)
+6,7 	Y Position 	(256th fraction 0-119)
+8,9 	Y Increment (256th fraction)
+10,11 	Angle in 32nd/circle
+12,13 	Sprite #
+
+Records 
+=======
+0 		Player
+1-4 	Bullets
+5..		Asteroids
