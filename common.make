@@ -22,6 +22,7 @@ S = \\
 PYTHON = c:\Python312\python.exe
 else
 CCOPY = cp
+CCAT = cat
 CCOPYREC = cp -r
 CDEL = rm -f
 CDELQ = 
@@ -35,9 +36,12 @@ endif
 ROOTDIR =  $(dir $(realpath $(lastword $(MAKEFILE_LIST))))..$(S)
 BINDIR = $(ROOTDIR)$(S)neo6502-firmware$(S)bin$(S)
 
-SRCNAME = $(wildcard *.bsc)
-OBJNAME = $(subst .bsc,.bas,$(SRCNAME))
-GFXNAME = $(subst .bsc,.gfx,$(SRCNAME))
+SRCNAME1 = $(wildcard *.bsc)
+SRCNAME2 = $(wildcard *.lib)
+
+SRCNAME = $(SRCNAME1) $(SRCNAME2)
+OBJNAME = $(subst .bsc,.bas,$(SRCNAME1))
+GFXNAME = $(subst .bsc,.gfx,$(SRCNAME1))
 
 APPFILES = $(SRCNAME) $(OBJNAME) $(GFXNAME)
 
@@ -58,8 +62,8 @@ trun : build
 	$(CDEL) memory.dump 
 
 tneo : build
-	$(CCOPY) $(SRCNAME) $(ROOTDIR)$(S)neo6502-firmware$(S)basic$(S)test.bsc
-	$(CCOPY) storage$(S)$(GFXNAME) $(ROOTDIR)$(S)neo6502-firmware$(S)basic$(S)storage
+	$(CCAT) $(SRCNAME) >$(ROOTDIR)$(S)neo6502-firmware$(S)basic$(S)test.bsc
+	$(CCOPY) storage$(S)*.* $(ROOTDIR)$(S)neo6502-firmware$(S)basic$(S)storage
 	make -C $(ROOTDIR)$(S)neo6502-firmware$(S)basic tneo
 
 release: 
