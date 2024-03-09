@@ -34,7 +34,7 @@ end
 '
 proc Initialise()
 	local i
-	maxObjects = 7:recordSize = 14
+	maxObjects = 77:recordSize = 14
 	objectList = alloc((maxObjects+5)*2):doke $FE,objectList
 	for i = 0 to maxObjects-1:objectList[i] = alloc(recordSize):next
 	dim freeObjects(maxObjects)
@@ -51,7 +51,7 @@ proc ResetStructures()
 	next
 endproc
 '
-'		Create a new asteriud
+'		Create a new asteroid
 '
 proc CreateAsteroid(x,y,size,angle)
 	local e,r
