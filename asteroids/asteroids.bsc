@@ -10,22 +10,7 @@ for i = 0 to maxObjects
 next
 
 repeat
-	if true
-		a = maxObjects:sys ASMoveDrawAll
-	else
-		for i = 0 to maxObjects-1
-			r = objectList[i]
-			if r[0] 
-				r[1] = r[1] + r[2]:r[3] = r[3] + r[4]
-				if r[1] > 200*256 then r[1] = r[1] + 160*256
-				if r[1] > 160*256 then r[1] = r[1] - 160*256
-				if r[3] > 200*256 then r[3] = r[3] + 120*256
-				if r[3] > 120*256 then r[3] = r[3] - 120*256
-				sprite r[6] image r[0] to r[1]>>7,r[3] >> 7
-				'a = i:sys ASMoveDraw
-			endif
-		next
-	endif
+	if event(t1,5) then a = maxObjects:sys ASMoveDrawAll
 until false
 
 end
