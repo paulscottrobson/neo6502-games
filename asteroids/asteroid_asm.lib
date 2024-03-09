@@ -28,9 +28,19 @@ proc AsmMoveDrawCurrent()
 		lda ($FE),y:sta $FC:clc:adc #2:sta $FA
 		iny:lda ($FE),y:sta $FD:adc #0:sta $FB
 		lda ($FC):beq ASMDExit
+
 		' Move
 		ldy #2:ldx #160:jsr ASMAdd
 		ldy #6:ldx #120:jsr ASMAdd
+
+		' Process the left/right wrap, vertical is fine as is.
+		ldy #3
+		lda ($FC),y
+		cmp #168:bcc ASNotOver1:cmp #248:bcs ASNotOver1
+		adc #248-168:bmi ASNotOver1:sbc # (248-168)*2
+	.ASNotOver1
+		sta ($FC),y
+
 		' Repaint
 		ldy #12:lda ($FC),y:sta CParam+0
 		ldy #2:lda ($FC),y:asl:iny:lda ($FC),y:rol

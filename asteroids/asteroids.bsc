@@ -5,12 +5,14 @@ gload "asteroids.gfx":cls:sprite clear
 call Initialise()
 call MachineCode()
 call ResetStructures()
+call ResetPlayer()
 for i = 0 to maxObjects
 	call CreateAsteroid(-1,-1,i % 3,rand(360))
 next
 
 repeat
-	if event(t1,5) then a = maxObjects:sys ASMoveDrawAll
+	if event(t1,4) then a = maxObjects:sys ASMoveDrawAll
+	if event(t2,2) then call RotatePlayer()
 until false
 
 end
@@ -19,7 +21,7 @@ end
 '
 proc Initialise()
 	local i
-	maxObjects = 77:recordSize = 14
+	maxObjects = 32:recordSize = 14
 	objectList = alloc((maxObjects+5)*2):doke $FE,objectList
 	for i = 0 to maxObjects-1:objectList[i] = alloc(recordSize):next
 	dim freeObjects(maxObjects)
@@ -44,19 +46,45 @@ proc CreateAsteroid(x,y,size,angle)
 		e = freeObjects(freeObjects(0))
 		freeObjects(0) = freeObjects(0) - 1
 		r = objectList[e]
-		if size = 2:r[0] = $C0+rand(8):else:r[0]=size*8+$80+rand(8):endif
+		if size = 2:r[0] = $C0+rand(8):else:r[0]=(1-size)*8+$80+rand(8):endif
 		if x < 0 then x = rand(160)
 		if y < 0 then y = rand(120)
 		r[1] = x * 256:r[3] = y * 256
-		call setObjectAngle(r,angle)
+		call SetObjectVelocity(r,0.2+(2-size)/2,angle)
 		r[6] = e
 	endif
 endproc
 '
-'		Set Angle of given object
+'		Set Speed/Angle of given object
 '
-proc SetObjectAngle(r,angle)
-	r[2] = int(sin(angle-90)*256)
-	r[4] = int(cos(angle-90)*256)
+proc SetObjectVelocity(r,speed,angle)
+	r[2] = int(sin(angle)*speed*256)
+	r[4] = -int(cos(angle)*speed*256)
 	r[5] = angle
+endproc
+'
+'		Initialise Player
+'
+proc ResetPlayer()
+	local i,r
+	for i = 1 to 4:r = objectList[i]:r[0] = 0:next
+	r = objectList[0]
+	call SetObjectVelocity(r,0,0)
+	r[0] = $90:r[1] = 80*256:r[3] = 60*256:r[6] = 0
+endproc
+'
+'		Rotate Player
+'
+proc RotatePlayer()
+	local fire,dx,dy
+	fire = joypad(dx,dy)
+	r = objectList[0]
+	if dx 
+		r[5] = (r[5] + dx * 4 + 360) % 360
+		r[0] = int(r[5] * 0.0888)+$90
+	endif
+	if fire 
+		r[2] = r[2] + int(sin(r[5])*32)
+		r[4] = r[4] - int(cos(r[5])*32)
+	endif
 endproc
