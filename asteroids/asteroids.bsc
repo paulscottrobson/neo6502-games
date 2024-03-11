@@ -10,11 +10,11 @@ for i = 0 to maxObjects
 	call Create.Asteroid(-1,-1,i % 3,rand(360))
 next 
 
-t1 = 0:t2 = 0:t3 = 0:t4 = 0
+tmr.movedraw = 0:tmr.rotate = 0:tmr.last.fire = 0:tmr.checkbullet = 0
 repeat
-	if event(t1,4) then a = maxObjects:sys ASMoveDrawAll
-	if event(t2,2) then call Rotate.Player()
-	if event(r4,20) then call Check.Kill.Bullets()
+	if event(tmr.movedraw,4) then a = maxObjects:sys ASMoveDrawAll
+	if event(tmr.rotate,2) then call Rotate.Player()
+	if event(tmr.checkbullet,20) then call Check.Kill.Bullets()
 until false
 
 end
@@ -98,9 +98,9 @@ endproc
 '		Fire bullet
 '
 proc Fire.Bullet()
-	if time() > t3
+	if time() > tmr.last.fire
 		local r,player
-		t3 = time()+20
+		tmr.last.fire = time()+20
 		n = freeBullets(freeBullets(0))
 		freeBullets(0) = freeBullets(0)-1
 		r = objectList[n]
