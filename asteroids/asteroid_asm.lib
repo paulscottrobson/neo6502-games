@@ -1,9 +1,10 @@
 '
 '	Assembler routines
 '
-proc MachineCode()
+proc Machine.Code()
 	memSize = 1024
 	codeSpace = alloc(memSize)
+	oList = $FE:ob1 = $FC:ob2 = $FA
 	CParam = $FF04
 	for pass = 0 to 1
 		o = pass * 1:p = codeSpace
@@ -25,38 +26,39 @@ proc AsmMoveDrawCurrent()
 
 	.ASMoveDraw
 		asl:tay
-		lda ($FE),y:sta $FC:clc:adc #2:sta $FA
-		iny:lda ($FE),y:sta $FD:adc #0:sta $FB
-		lda ($FC):beq ASMDExit
+		lda (oList),y:sta ob1:clc:adc #2:sta ob2
+		iny:lda (oList),y:sta ob1+1:adc #0:sta ob2+1
+		lda (ob1):beq ASMDExit
 
 		' Move
 		ldy #2:ldx #160:jsr ASMAdd
 		ldy #6:ldx #120:jsr ASMAdd
 
+
 		' Process the left/right wrap, vertical is fine as is.
 		ldy #3
-		lda ($FC),y
+		lda (ob1),y
 		cmp #168:bcc ASNotOver1:cmp #248:bcs ASNotOver1
 		adc #248-168:bmi ASNotOver1:sbc # (248-168)*2
 	.ASNotOver1
-		sta ($FC),y
+		sta (ob1),y
 
 		' Repaint
-		ldy #12:lda ($FC),y:sta CParam+0
-		ldy #2:lda ($FC),y:asl:iny:lda ($FC),y:rol
+		ldy #12:lda (ob1),y:sta CParam+0
+		ldy #2:lda (ob1),y:asl:iny:lda (ob1),y:rol
 		sta CParam+1:lda #0:adc #0:sta CParam+2
-		ldy #6:lda ($FC),y:asl:iny:lda ($FC),y:rol
+		ldy #6:lda (ob1),y:asl:iny:lda (ob1),y:rol
 		sta CParam+3:stz CParam+4
-		lda ($FC):and #$7F:sta CParam+5
+		lda (ob1):and #$7F:sta CParam+5
 		stz CParam+6:stz CParam+7
-		call SendMessage(6,2)
+		call Send.Message(6,2)
 	.ASMDExit		
 		rts
 	.ASMAdd
 		clc
-		lda ($FC),y:adc ($FA),y:sta ($FC),y
+		lda (ob1),y:adc (ob2),y:sta (ob1),y
 		iny
-		lda ($FC),y:adc ($FA),y:sta ($FC),y
+		lda (ob1),y:adc (ob2),y:sta (ob1),y
 		rts
 endproc
 '
@@ -64,7 +66,7 @@ proc Debug()
 	poke p,3:p = p + 1
 endproc
 '
-proc SendMessage(group,func)
+proc Send.Message(group,func)
 	jsr 	$FFF7
 	poke p,group:poke p+1,func:p = p + 2
 	jsr 	$FFF4

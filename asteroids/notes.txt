@@ -23,6 +23,7 @@ Record
 10,11 	Angle in 32nd/circle
 12,13 	Sprite #
 
+
 Records 
 =======
 0 		Player
