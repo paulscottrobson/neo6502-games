@@ -3,13 +3,14 @@
 '
 gload "asteroids.gfx":cls:sprite clear
 call Initialise()
-call Machine.Code()
 
-cls:call DrawLives():call DrawScore()
+cls
+call DrawLives()
+call DrawScore()
 call Reset.Structures()
 call Reset.Player()
-for i = 0 to maxObjects
-	call Create.Asteroid(-1,-1,i % 3,rand(360))
+for i = 1 to 4
+	call Create.Asteroid(-1,-1,0,rand(360))
 next 
 
 tmr.movedraw = 0:tmr.rotate = 0:tmr.last.fire = 0:tmr.checkbullet = 0
@@ -17,6 +18,7 @@ repeat
 	if event(tmr.movedraw,4) then a = maxObjects:sys ASMoveDrawAll
 	if event(tmr.rotate,2) then call Rotate.Player()
 	if event(tmr.checkbullet,20) then call Check.Kill.Bullets()
+	a = 0:sys ASCalculateNearest:print chr$(20);nearest[0],nearest[1],nearest[2];"   "
 until false
 
 end
@@ -26,9 +28,12 @@ end
 proc Initialise()
 	local i
 	maxObjects = 32:recordSize = 14:lives = 3:score = 0
-	objectList = alloc((maxObjects+5)*2):doke $FE,objectList
+	objectList = alloc((maxObjects+5)*2)
+	'nearest = alloc(4)
 	for i = 0 to maxObjects-1:objectList[i] = alloc(recordSize):next
 	dim freeObjects(maxObjects),freeBullets(4),killBulletTime(4)
+	call Machine.Code()
+	doke oList,objectList
 endproc
 '
 '		Reset the data structures. Disable all objects, create default free objects table for asteroids.
@@ -107,7 +112,7 @@ proc Fire.Bullet()
 		freeBullets(0) = freeBullets(0)-1
 		r = objectList[n]
 		player = objectList[0]
-		call Set.Object.Velocity(r,1.5,player[5])
+		call Set.Object.Velocity(r,2.5,player[5])
 		r[1] = player[1]:r[3] = player[3]:r[0] = $BA:r[6] = n
 		killBulletTime(n) = time()+100
 	endif

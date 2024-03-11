@@ -29,3 +29,9 @@ Records
 0 		Player
 1-4 	Bullets
 5..		Asteroids
+
+Nearest
+=======
+0,1		Asteroid record #
+2,3		Distance to it.
+4,5 	Asteroid radius

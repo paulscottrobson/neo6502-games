@@ -4,12 +4,14 @@
 proc Machine.Code()
 	memSize = 1024
 	codeSpace = alloc(memSize)
-	oList = $FE:ob1 = $FC:ob2 = $FA
+	oList = $FE:ob1 = $FC:ob2 = $FA:temp = $F9:nearest = alloc(6)
 	CParam = $FF04
 	for pass = 0 to 1
 		o = pass * 1:p = codeSpace
 		call AsmMoveDrawCurrent()
 		call AsmMoveDrawAll()
+		call AsmCalculateDistance()
+		call AsmCalculateNearest()
 	next
 	assert p-codeSpace+128 < memSize
 endproc
@@ -35,13 +37,16 @@ proc AsmMoveDrawCurrent()
 		ldy #6:ldx #120:jsr ASMAdd
 
 
-		' Process the left/right wrap, vertical is fine as is.
+		' Process the left/right wrap
 		ldy #3
 		lda (ob1),y
 		cmp #168:bcc ASNotOver1:cmp #248:bcs ASNotOver1
 		adc #248-168:bmi ASNotOver1:sbc # (248-168)*2
 	.ASNotOver1
 		sta (ob1),y
+
+		' Process the up/down wrap
+		ldy #7:lda (ob1),y:and #$7F:sta (ob1),y
 
 		' Repaint
 		ldy #12:lda (ob1),y:sta CParam+0
@@ -60,6 +65,53 @@ proc AsmMoveDrawCurrent()
 		iny
 		lda (ob1),y:adc (ob2),y:sta (ob1),y
 		rts
+endproc
+'
+proc ASMCalculateDistance()
+
+	.ASCalculateDistance
+		phx:ldx #ob1:jsr ASCDSetRecord
+		pla:ldx #ob2:jsr ASCDSetRecord
+		lda (ob1):beq ASCDMiss:lda (ob2):beq ASCDMiss
+
+		ldy #1*2+1:jsr ASCDDistance:sta temp
+		ldy #3*2+1:jsr ASCDDistance
+		clc:adc temp:lsr:sta temp:rts
+	.ASCDMiss
+		lda #$FF:sta temp:rts
+
+	.ASCDSetRecord
+		asl:tay
+		lda (oList),y:sta 0,x:iny:lda (oList),y:sta 1,x
+		rts
+
+	.ASCDDistance
+		sec:lda (ob1),y:sbc (ob2),y:bpl ASCDPositive:eor #$FF:inc
+	.ASCDPositive
+		rts
+
+endproc
+'
+proc AsmCalculateNearest()
+	.ASCalculateNearest
+		pha
+		stz nearest:stz nearest+1
+		lda #$FF:sta nearest+2:stz nearest+3
+		stz nearest+4:stz nearest+5
+		ldx #5
+	.ASCNLoop
+		pla:pha:phx
+		jsr ASCalculateDistance
+		plx:cmp #$FF:beq ASCNNotNearer
+	
+	.breakhere
+		nop		
+		cmp nearest+2:bcs ASCNNotNearer
+		sta nearest+2:stx nearest+0
+		pla:pha:asl:asl:adc #4:sta nearest+4
+	.ASCNNotNearer
+		inx:cpx #maxObjects:bne ASCNLoop		
+		pla:rts
 endproc
 '
 proc Debug()
