@@ -22,7 +22,7 @@ Record
 8,9 	Y Increment (256th fraction)
 10,11 	Angle in 32nd/circle
 12,13 	Sprite #
-
+14,15 	Size
 
 Records 
 =======

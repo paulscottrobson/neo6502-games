@@ -104,11 +104,9 @@ proc AsmCalculateNearest()
 		jsr ASCalculateDistance
 		plx:cmp #$FF:beq ASCNNotNearer
 	
-	.breakhere
-		nop		
 		cmp nearest+2:bcs ASCNNotNearer
 		sta nearest+2:stx nearest+0
-		pla:pha:asl:asl:adc #4:sta nearest+4
+		ldy #14:lda (ob2),y:asl:adc #2:sta nearest+4
 	.ASCNNotNearer
 		inx:cpx #maxObjects:bne ASCNLoop		
 		pla:rts

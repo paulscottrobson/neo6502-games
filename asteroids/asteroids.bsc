@@ -4,22 +4,25 @@
 gload "asteroids.gfx":cls:sprite clear
 call Initialise()
 
+call Reset.Structures()
+for i = 1 to 4
+	call Create.Asteroid(-1,-1,2,rand(360))
+next 
+
 cls
 call DrawLives()
 call DrawScore()
-call Reset.Structures()
 call Reset.Player()
-for i = 1 to 4
-	call Create.Asteroid(-1,-1,0,rand(360))
-next 
 
 tmr.movedraw = 0:tmr.rotate = 0:tmr.last.fire = 0:tmr.checkbullet = 0
 repeat
-	if event(tmr.movedraw,4) then a = maxObjects:sys ASMoveDrawAll
+	if event(tmr.movedraw,4) 
+		a = maxObjects:sys ASMoveDrawAll
+		a = 0:sys ASCalculateNearest:if nearest[1] < nearest[2] then dead = true
+	endif
 	if event(tmr.rotate,2) then call Rotate.Player()
 	if event(tmr.checkbullet,20) then call Check.Kill.Bullets()
-	a = 0:sys ASCalculateNearest:print chr$(20);nearest[0],nearest[1],nearest[2];"   "
-until false
+until dead | asteroid.count = 0
 
 end
 '
@@ -27,7 +30,7 @@ end
 '
 proc Initialise()
 	local i
-	maxObjects = 32:recordSize = 14:lives = 3:score = 0
+	maxObjects = 32:recordSize = 16:lives = 3:score = 0
 	objectList = alloc((maxObjects+5)*2)
 	'nearest = alloc(4)
 	for i = 0 to maxObjects-1:objectList[i] = alloc(recordSize):next
@@ -48,6 +51,7 @@ proc Reset.Structures()
 	next
 	freeBullets(0) = 4
 	for i = 1 to 4:freeBullets(i) = i:killBulletTime(i) = 0:next 
+	asteroid.count = 0
 endproc
 '
 '		Create a new asteroid
@@ -63,7 +67,8 @@ proc Create.Asteroid(x,y,size,angle)
 		if y < 0 then y = rand(120)
 		r[1] = x * 256:r[3] = y * 256
 		call Set.Object.Velocity(r,0.2+(2-size)/2,angle)
-		r[6] = e
+		r[6] = e:r[7] = size
+		asteroid.count = asteroid.count + 1
 	endif
 endproc
 '
@@ -83,6 +88,7 @@ proc Reset.Player()
 	r = objectList[0]
 	call Set.Object.Velocity(r,0,0)
 	r[0] = $90:r[1] = 80*256:r[3] = 60*256:r[6] = 0
+	dead = false
 endproc
 '
 '		Rotate Player
@@ -93,7 +99,7 @@ proc Rotate.Player()
 	r = objectList[0]
 	if dx
 		r[5] = (r[5] + dx * 4 + 360) % 360
-		r[0] = int(r[5] * 0.0888+0.5)+$90
+		r[0] = (int(r[5] * 0.0888+0.5) & 31)+$90
 	endif
 	if dy < 0
 		r[2] = r[2] + int(sin(r[5])*16)
@@ -158,4 +164,3 @@ proc DrawScore()
 		image asc(mid$(a$,i,1))+$80 frame to i*6,-4
 	next
 endproc
-stop
