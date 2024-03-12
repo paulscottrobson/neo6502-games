@@ -67,7 +67,7 @@ endproc
 '
 proc Create.Level(n)
 	call Reset.Structures()
-	local n: n = max((level-1)\3+4,8)
+	local n: n = min((level-1)\3+4,8)
 	for i = 1 to n
 		call Create.Asteroid(-1,-1,2,rand(360))
 	next 
