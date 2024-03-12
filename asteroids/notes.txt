@@ -35,3 +35,4 @@ Nearest
 0,1		Asteroid record #
 2,3		Distance to it.
 4,5 	Asteroid radius
+6,7 	Collider record #

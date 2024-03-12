@@ -3,36 +3,45 @@
 '
 gload "asteroids.gfx":cls:sprite clear
 call Initialise()
-
-call Reset.Structures()
-for i = 1 to 4
-	call Create.Asteroid(-1,-1,2,rand(360))
-next 
-
-cls
-call DrawLives()
-call DrawScore()
-call Reset.Player()
-
-tmr.movedraw = 0:tmr.rotate = 0:tmr.last.fire = 0:tmr.checkbullet = 0
+call Create.Level(1)
 repeat
-	if event(tmr.movedraw,4) 
-		a = maxObjects:sys ASMoveDrawAll
-		a = 0:sys ASCalculateNearest:if nearest[1] < nearest[2] then dead = true
-	endif
-	if event(tmr.rotate,2) then call Rotate.Player()
-	if event(tmr.checkbullet,20) then call Check.Kill.Bullets()
-until dead | asteroid.count = 0
-
+	call Play.Level()
+until lives = 0
 end
+
+'
+'	Play level with current setup
+'
+proc Play.Level()
+	cls
+	call DrawLives()
+	call DrawScore()
+	call Reset.Player()
+	call Wait.Safe()
+	tmr.movedraw = 0:tmr.rotate = 0:tmr.last.fire = 0:tmr.checkbullet = 0
+	repeat
+		if event(tmr.movedraw,4) 
+			a = maxObjects:sys ASMoveDrawAll
+			a = 0:sys ASCalculateNearest:if nearest[1] < nearest[2] then dead = true
+			sys ASCheckBulletCollision:if nearest[1] < nearest[2] then call Kill.Bullet(nearest[3]):call Hit.Asteroid(nearest[0])
+		endif
+		if event(tmr.rotate,2) then call Rotate.Player()
+		if event(tmr.checkbullet,20) then call Check.Kill.Bullets()		
+	until dead | asteroid.count = 0
+	if dead 
+		lives = lives - 1:call DrawLives()
+		call Dead.Animation()
+	else
+		level = level + 1:call Create.Level(level)
+	endif
+endproc
 '
 '		Initialise data structures, arrays etc.
 '
 proc Initialise()
 	local i
-	maxObjects = 32:recordSize = 16:lives = 3:score = 0
+	maxObjects = 32:recordSize = 16:lives = 3:score = 0:level = 0
 	objectList = alloc((maxObjects+5)*2)
-	'nearest = alloc(4)
 	for i = 0 to maxObjects-1:objectList[i] = alloc(recordSize):next
 	dim freeObjects(maxObjects),freeBullets(4),killBulletTime(4)
 	call Machine.Code()
@@ -54,11 +63,21 @@ proc Reset.Structures()
 	asteroid.count = 0
 endproc
 '
+'		Create a new level
+'
+proc Create.Level(n)
+	call Reset.Structures()
+	for i = 1 to 4
+		call Create.Asteroid(-1,-1,2,rand(360))
+	next 
+endproc
+'
 '		Create a new asteroid
 '
 proc Create.Asteroid(x,y,size,angle)
 	local e,r
 	if freeObjects(0) > 0 
+		angle = (angle+360) % 360
 		e = freeObjects(freeObjects(0))
 		freeObjects(0) = freeObjects(0) - 1
 		r = objectList[e]
@@ -70,6 +89,23 @@ proc Create.Asteroid(x,y,size,angle)
 		r[6] = e:r[7] = size
 		asteroid.count = asteroid.count + 1
 	endif
+endproc
+'
+'		Hit an asteroid
+'
+proc Hit.Asteroid(n)
+	local r:r = objectList[n]
+	if r[7] = 2 then score = score + 25
+	if r[7] = 1 then score = score + 100
+	if r[7] = 0 then score = score + 250
+	if r[7] <> 0 
+		call Create.Asteroid(r[1] >> 8,r[3] >> 8,r[7]-1,r[5]+90)
+		call Create.Asteroid(r[1] >> 8,r[3] >> 8,r[7]-1,r[5]+270)
+	endif
+	sprite r[6] hide:r[0] = 0
+	freeObjects(0) = freeObjects(0)+1:freeObjects(freeObjects(0)) = n
+	asteroid.count = asteroid.count-1
+	call DrawScore()
 endproc
 '
 '		Set Speed/Angle of given object
@@ -87,7 +123,7 @@ proc Reset.Player()
 	for i = 1 to 4:r = objectList[i]:r[0] = 0:next
 	r = objectList[0]
 	call Set.Object.Velocity(r,0,0)
-	r[0] = $90:r[1] = 80*256:r[3] = 60*256:r[6] = 0
+	r[0] = $BA:r[1] = 80*256:r[3] = 60*256:r[6] = 0
 	dead = false
 endproc
 '
@@ -149,6 +185,7 @@ endproc
 '
 proc DrawLives()
 	local i
+	rect from 9,11 solid ink 0 to 50,22
 	if lives > 1
 		for i = 1 to lives-1:image $BB frame to i*8+10,8:next
 	endif
@@ -163,4 +200,34 @@ proc DrawScore()
 	for i = 1 to len(a$)
 		image asc(mid$(a$,i,1))+$80 frame to i*6,-4
 	next
+endproc
+'
+'		Dead Animation
+'
+proc Dead.Animation()
+	local i,j,a,t,r:t = 0:r = objectList[0]
+	sprite 0 hide
+	i = 0
+	while i < 24
+		for j = 0 to 15
+			a = j * 360 / 16
+			sprite j+64 image $BA to int((r[1]>>7)+i*sin(a)),int((r[3]>>7)+i*cos(a))
+			if i = 23 then sprite j+64 hide
+		next
+		i = i+1
+	wend
+endproc
+'
+'		Wait till safe
+'
+proc Wait.Safe()
+	local t:t = 0
+	is.clear = false
+	repeat
+		if event(t,4) 
+			a = maxObjects:sys ASMoveDrawAll
+			a = 0:sys ASCalculateNearest:if nearest[1] > 12 then is.clear = true
+		endif
+	until is.clear
+	r = objectList[0]:r[0] = $90
 endproc
