@@ -13,6 +13,7 @@
 all: 
 	rm -f ../neo6502-firmware/examples/basic/games/*
 	make -B -C asteroids
+	make -B -C aticatac
 	make -B -C breakout
 	make -B -C frogger
 	make -B -C galaxians
