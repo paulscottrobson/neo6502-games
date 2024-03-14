@@ -74,6 +74,7 @@ class Extractor(object):
 				col = image.getpixel((x,y))				
 				if col != 0:
 					col = 7	if col == 3 else col
+					col = 6 if col == 1 else col
 					if colour is not None:
 						col = colour
 						r = 255 if (col & 1) else 0
@@ -113,6 +114,9 @@ class Extractor(object):
 								.colour,3	81,23 121,23
 								// Missile
 								.colour,7	101,69 121,69
+								// Keys
+								.colour,1,3,6 1,200
+
 								// Baddies
 								.colour,1,3,6
 									241,93 261,93 221,120 261,120 109,144
