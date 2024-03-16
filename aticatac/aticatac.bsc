@@ -2,10 +2,9 @@
 '	*** Atic Atac ***
 '
 call initialise.game()
+level = 1
 call draw.room()
 end
-
-
 '
 '		initialise game
 '
@@ -27,10 +26,29 @@ endproc
 '		Draw room
 '
 proc draw.room()
-	local n
+	local i,n,g
 	cls:sprite clear
 	ink 3:print chr$(20);x.room;",";y.room
 	if level = 1:call draw.room.outline(2):else:call draw.room.outline(1):endif
+	call random.seed.room(x.room,y.room-1,level):call make.door(0)
+	call random.seed.room(x.room,y.room,level):call make.door(1):call make.door(2)
+	call random.seed.room(x.room-1,y.room,level):call make.door(3):call make.door(3)
+	contents = 0: ' $D4 pit, $D5 ladder
+	if x.room <> x.start | y.room <> y.start
+		if (seed & E00) = 0 
+			contents = $D4:if level > 1 & (seed & $800) then contents = $D5
+		endif
+	endif
+	for i = 0 to 3
+		print i;" ";doors(i);" ";door.open(i);" ";door.period(i)
+		if doors(i) then call draw.wall.element(i,0,doors(i),4)
+		call random.next()
+		if (seed & $E0) = 0 & level = 1 
+			n = 32:if (seed & 2) then n = -n
+			call draw.wall.element(i,n,$D0 + (seed & 1),2)	
+		endif
+	next
+	if contents <> 0 then image contents to 128-16,120-16
 	text "1 Up" dim 1 ink 3 to 277,4
 	call draw.score():call draw.keys():call draw.energy()
 	if lives > 0
@@ -38,6 +56,54 @@ proc draw.room()
 			image $D6 to (n-1)*16+258,54
 		next
 	endif
+	sprite 0 image $D6 to x.player,y.player
+endproc
+'
+'		create doors in given direction using preset random seed.
+'
+proc make.door(d)
+	local i,base:base = $C0:if level = 1 then base = $C8
+	doors(d) = 0:door.open(d) = false:door.period(d) = 0:door.timer(d) = -1
+	call random.next()
+	if seed & 256
+		doors(d) = base:door.open(d) = true 
+		if (seed & $C0) = 0
+			doors(d) = base + 1 + seed % 3:door.open(d) = false
+			if (seed & $30) 
+				door.period(d) = 500
+				door.timer(d) = rand(door.period(d))+time()
+			endif
+		endif
+	endif
+	if level = 1
+		if x.room = x.start & y.room = y.start
+			for i = 0 to 3:call open.door(i):next
+		endif
+		if x.room = x.start & y.room = y.start-1 then call open.door(2)
+		if x.room = x.start+1 & y.room = y.start then call open.door(3)
+		if x.room = x.start & y.room = y.start+1 then call open.door(0)
+		if x.room = x.start-1 & y.room = y.start then call open.door(1)
+	endif
+endproc
+'
+'		set door to default open
+'
+proc open.door(d)
+	doors(d) = $C0:if level = 1 then doors(d) = $C8
+	door.open(d) = true:door.period(d) = 0:door.timer(d) = -1
+endproc	
+'
+'		draw offset element
+'
+proc draw.wall.element(d,offset,g,rot)
+	local x,y,f
+	x = 128 + offset - 16:y = 120-64::f = 0
+	if d = 2 then f = 2:y = 272-y
+	if d = 1 | d = 3 
+		g = g + rot:x = 128-64-32:f = d >> 1:y = 120+16+offset
+		if d = 1 then x = 128+64
+	endif
+	image g,f to x,y-32 
 endproc
 '
 '		draw the energy bar
@@ -107,6 +173,11 @@ endproc
 '
 proc random.seed(n)
 	seed = n 
+endproc
+'
+proc random.seed.room(x,y,l)
+	x = x & room.mask:y = y & room.mask
+	seed = x * 37 + level * 123456 + y * 617
 endproc
 '
 proc random.next()
