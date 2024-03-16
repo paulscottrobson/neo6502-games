@@ -2,8 +2,11 @@
 '	*** Atic Atac ***
 '
 call initialise.game()
-level = 1
 call draw.room()
+tMove = 0
+repeat
+	if event(tMove,1) then call move.player()
+until false
 end
 '
 '		initialise game
@@ -19,8 +22,39 @@ gload "aticatac.gfx"
 	dim door.timer(3): ' timer for door opening/closing
 	' initialise player
 	lives = 3:score = 0:x.room = x.start:y.room = y.start
-	x.player = 128:y.player = 120
+	x.player = 128:y.player = 120:xi.player = 0:yi.player = 0:x.flip = 0
 	dim key.count(3): ' key counts 1-3
+endproc
+'
+'		Move Player.
+'
+proc move.player()
+	local fire 
+	fire = joypad(xi.player,yi.player)
+	if xi.player|yi.player
+		x.player = x.player + (xi.player << 1)
+		if x.player then x.flip = (1-xi.player)>>1
+		y.player = y.player + (yi.player << 1)
+		sprite 0 image $D6 + (((x.player+y.player) >> 3) & 1) flip x.flip to x.player,y.player
+		if abs(x.player-128) > 56 | abs(y.player-120) > 56 then call hit.wall()
+	endif
+endproc
+'
+'		Hit Wall
+'
+proc hit.wall()
+	local d,moved:moved = false
+	x.player = max(128-56,min(x.player,128+56))
+	y.player = max(120-56,min(y.player,120+56))
+	if abs(x.player-128) >= 56 & abs(y.player-120) < 10
+		d = -1 if x.player > 128 then d = 1
+		if door.open(d & 3) then x.room = (x.room + d) & room.mask:x.player = 256-x.player:moved = true
+	endif
+	if abs(y.player-120) >= 56 & abs(x.player-128) < 10
+		d = 0 if y.player > 128 then d = 2
+		if door.open(d & 3) then y.room = (y.room + d - 1) & room.mask:y.player = 240-y.player:moved = true
+	endif
+	if moved then call draw.room()
 endproc
 '
 '		Draw room
@@ -30,17 +64,18 @@ proc draw.room()
 	cls:sprite clear
 	ink 3:print chr$(20);x.room;",";y.room
 	if level = 1:call draw.room.outline(2):else:call draw.room.outline(1):endif
-	call random.seed.room(x.room,y.room-1,level):call make.door(0)
+	' First is right, second is down
+	call random.seed.room(x.room,y.room-1,level):call make.door(0):call make.door(0)
 	call random.seed.room(x.room,y.room,level):call make.door(1):call make.door(2)
-	call random.seed.room(x.room-1,y.room,level):call make.door(3):call make.door(3)
+	call random.seed.room(x.room-1,y.room,level):call make.door(3)
 	contents = 0: ' $D4 pit, $D5 ladder
 	if x.room <> x.start | y.room <> y.start
-		if (seed & E00) = 0 
+		if (seed & 800) = 0 
 			contents = $D4:if level > 1 & (seed & $800) then contents = $D5
 		endif
 	endif
 	for i = 0 to 3
-		print i;" ";doors(i);" ";door.open(i);" ";door.period(i)
+		'print i;" ";doors(i);" ";door.open(i);" ";door.period(i)
 		if doors(i) then call draw.wall.element(i,0,doors(i),4)
 		call random.next()
 		if (seed & $E0) = 0 & level = 1 
@@ -65,11 +100,11 @@ proc make.door(d)
 	local i,base:base = $C0:if level = 1 then base = $C8
 	doors(d) = 0:door.open(d) = false:door.period(d) = 0:door.timer(d) = -1
 	call random.next()
-	if seed & 256
+	if seed & $100
 		doors(d) = base:door.open(d) = true 
-		if (seed & $C0) = 0
+		if (seed & $C0) 
 			doors(d) = base + 1 + seed % 3:door.open(d) = false
-			if (seed & $30) 
+			if (seed & $10)
 				door.period(d) = 500
 				door.timer(d) = rand(door.period(d))+time()
 			endif
@@ -84,6 +119,7 @@ proc make.door(d)
 		if x.room = x.start & y.room = y.start+1 then call open.door(0)
 		if x.room = x.start-1 & y.room = y.start then call open.door(1)
 	endif
+	door.open(d) = true
 endproc
 '
 '		set door to default open
@@ -177,7 +213,7 @@ endproc
 '
 proc random.seed.room(x,y,l)
 	x = x & room.mask:y = y & room.mask
-	seed = x * 37 + level * 123456 + y * 617
+	seed = x * 37 + level * 1234567 + y * 617
 endproc
 '
 proc random.next()

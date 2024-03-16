@@ -111,11 +111,11 @@ class Extractor(object):
 								@sprites.bmp
 								.centre
 								// Player
-								.colour,3	81,23 121,23
+								.colour,3	81,23 101,23
 								// Missile
 								.colour,7	101,69 121,69
 								// Keys
-								.colour,1,3,6 1,200
+								.colour,1,3,2 1,200
 
 								// Baddies
 								.colour,1,3,6
