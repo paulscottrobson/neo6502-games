@@ -7,7 +7,7 @@ tMove = 0:tMissile = 0:tCheck = 0
 repeat
 	if event(tMove,1) then call move.player()
 	if event(tMissile,2) then if tMissileEnd >= 0 then call move.missile()
-	if event(tCheck,25) then call check.open.close()
+	if event(tCheck,25) then call check.open.close.wake()
 until false
 end
 '
@@ -23,6 +23,11 @@ proc initialise.game()
 	dim doors(3): ' Values 0-7 see map.py
 	dim door.open(3): ' true if door is open, false if shut/wall.
 	dim door.timer(3): ' timer for door opening/closing
+	' monster records
+	dim mon.xi(4),mon.yi(4):' movement use sprite.x functions etc.
+	dim mon.timer(4),mon.speed(4):' event variables for movement. timer -1 means not inuse.
+	dim mon.iq(4): ' intelligence ; probability out of 100 of redirection / move. If this is 100 then invulnerable.
+	dim mon.alive(4): ' flag indicating alive e.g. not in wakeup mode.
 	' initialise player
 	lives = 3:score = 0:x.room = x.start:y.room = y.start
 	x.player = 128:y.player = 120:xi.player = 0:yi.player = 0:x.flip = 0
@@ -135,6 +140,7 @@ proc draw.room()
 			call draw.wall.element(i,n,$D0 + (seed & 1),2)	
 		endif
 	next
+	for i = 0 to 4:mon.timer(i) = -1:next 
 	if floor.centre <> 0 then image floor.centre to 128-16,120-16
 	text "1 Up" dim 1 ink 3 to 277,4
 	call draw.score():call draw.keys():call draw.energy()
@@ -155,7 +161,7 @@ endproc
 '
 '		check open/close in current room
 '
-proc check.open.close()
+proc check.open.close.wake()
 	local i,n
 	for i = 0 to 3
 		if door.timer(i) > 0 & time() > door.timer(i)
