@@ -24,6 +24,7 @@ proc initialise.game()
 	dim door.open(3): ' true if door is open, false if shut/wall.
 	dim door.timer(3): ' timer for door opening/closing
 	' monster records
+	dim mon.graphic(4): ' monster graphic (when alive)
 	dim mon.xi(4),mon.yi(4):' movement use sprite.x functions etc.
 	dim mon.timer(4),mon.speed(4):' event variables for movement. timer -1 means not inuse.
 	dim mon.iq(4): ' intelligence ; probability out of 100 of redirection / move. If this is 100 then invulnerable.
