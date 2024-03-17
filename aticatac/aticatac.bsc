@@ -3,9 +3,10 @@
 '
 call initialise.game()
 call draw.room()
-tMove = 0
+tMove = 0:tMissile = 0
 repeat
-	if event(tMove,1) then call move.player()
+	if event(tMove,3) then call move.player()
+	if event(tMissile,2) then if tMissileEnd >= 0 then call move.missile()
 until false
 end
 '
@@ -38,7 +39,28 @@ proc move.player()
 		sprite 0 image $D6 + (((x.player+y.player) >> 3) & 1) flip x.flip to x.player,y.player
 		if abs(x.player-128) > 56 | abs(y.player-120) > 56 then call hit.wall()
 	endif
+	if fire <> 0 
+		if tMissileEnd < 0
+			tMissileEnd = time()+150
+			x.missile = x.player:y.missile = y.player
+			xi.missile = xi.player*3:yi.missile = yi.player*3
+			while (xi.missile|yi.missile) = 0
+				xi.missile = (rand(3)-1)*3:yi.missile = (rand(3)-1)*3
+			wend			
+		endif
+	endif
 endproc
+'
+'		Move missile
+proc move.missile()
+	sprite 1 image $D8 to x.missile,y.missile
+	x.missile = x.missile + xi.missile
+	y.missile = y.missile + yi.missile
+	if abs(x.missile-128) > 58 then xi.missile = -xi.missile
+	if abs(y.missile-120) > 58 then yi.missile = -yi.missile
+	if time() > tMissileEnd then sprite 1 hide:tMissileEnd = -1
+endproc
+'
 '
 '		Hit Wall
 '
@@ -92,6 +114,7 @@ proc draw.room()
 		next
 	endif
 	sprite 0 image $D6 to x.player,y.player
+	tMissileEnd = -1
 endproc
 '
 '		create doors in given direction using preset random seed.
