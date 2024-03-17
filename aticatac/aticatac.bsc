@@ -26,6 +26,7 @@ proc initialise.game()
 	lives = 3:score = 0:x.room = x.start:y.room = y.start
 	x.player = 128:y.player = 120:xi.player = 0:yi.player = 0:x.flip = 0
 	dim key.count(3): ' key counts 1-3
+	for i = 1 to 3:key.count(i) = 2:next
 endproc
 '
 '		Move Player.
@@ -81,13 +82,31 @@ proc hit.wall()
 	y.player = max(120-56,min(y.player,120+56))
 	if abs(x.player-128) >= 56 & abs(y.player-120) < 10
 		d = -1 if x.player > 128 then d = 1
+		call check.unlock(d & 3)
 		if door.open(d & 3) then x.room = (x.room + d):x.player = 256-x.player:moved = true
 	endif
 	if abs(y.player-120) >= 56 & abs(x.player-128) < 10
 		d = 0 if y.player > 128 then d = 2
+		call check.unlock(d & 3)
 		if door.open(d & 3) then y.room = (y.room + d - 1) y.player = 240-y.player:moved = true
 		endif
 	if moved then call draw.room()
+endproc
+'
+'		Check unlocked in direction d
+'
+proc check.unlock(d)
+	if (doors(d) & 3) <> 0
+		if key.count(doors(d) & 3) > 0 
+			key.count(doors(d) & 3) = key.count(doors(d) & 3)-1
+			doors(d) = 4:door.open(d) = true
+			local a:a = game.data + x.room + y.room*size + level*size*size
+			if d = 0 then poke a-size,(peek(a-size) & $C7) + $20
+			if d = 1 then poke a,(peek(a) & $F8) + $04
+			if d = 2 then poke a,(peek(a) & $C7) + $20
+			if d = 3 then poke a-1,(peek(a-1) & $F8) + $04
+		endif
+	endif
 endproc
 '
 '		Draw room
@@ -190,7 +209,7 @@ proc draw.keys()
 	for i = 1 to 3:
 		x = 256 + (i-1) * 21 - 5
 		image $D9+i dim 1 frame to x,y
-		text "00" to x+11,y + 24
+		text right$("00"+str$(key.count(i)),2) to x+11,y + 24
 	next
 endproc
 '
@@ -279,8 +298,7 @@ proc random.next()
 endproc
 
 ' Auto doors.
-' Key opening doors.
 ' Create monsters and move them. Type changes : invulnerable, speed, intelligence
 ' Scoring system , shooting
 ' Energy, dropping energy/key objects, collection
-
+' SFX
