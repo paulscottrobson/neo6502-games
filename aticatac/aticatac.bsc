@@ -248,3 +248,10 @@ proc random.next()
 		if bit0 then seed = seed ^ $B400
 	next
 endproc
+
+' #define for identifiers.
+' Handle pits and stairs. Stairs need redrawing.
+' Create monsters and move them. Type changes : invulnerable, speed, intelligence
+' Scoring system , shooting
+' Energy, dropping energy/key objects, collection
+' Doors and Keys
