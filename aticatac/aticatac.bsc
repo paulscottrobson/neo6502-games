@@ -3,11 +3,12 @@
 '
 call initialise.game()
 call draw.room()
-tMove = 0:tMissile = 0:tCheck = 0
 repeat
-	if event(tMove,1) then call move.player()
+	if event(tMove,3) then call move.player()
 	if event(tMissile,2) then if tMissileEnd >= 0 then call move.missile()
 	if event(tCheck,25) then call check.open.close.wake()
+	if mon.timer(curr.monster) >= 0 then call move.monster(curr.monster)
+	curr.monster = (curr.monster+1) & 3
 until false
 end
 '
@@ -123,7 +124,7 @@ proc draw.room()
 	cls:sprite clear
 	call random.seed.room(x.room,y.room,level)
 	if level = 0:call draw.room.outline(2):else:call draw.room.outline(1):endif
-	ink 3:print chr$(20);level;" ";x.room;",";y.room;" ";n
+	ink 3:print chr$(20);"L";level+1;" ";x.room;",";y.room
 	' First is right, second is down
 	call read.map(n,level,x.room,y.room-1):call make.door(0,n >> 3)
 	call read.map(n,level,x.room-1,y.room):call make.door(3,n)
@@ -152,6 +153,7 @@ proc draw.room()
 	endif
 	sprite 0 image $D6 to x.player,y.player
 	tMissileEnd = -1
+	tMove = 0:tMissile = 0:tCheck = 0:curr.monster = 0
 endproc
 '
 '		read map
@@ -172,6 +174,56 @@ proc check.open.close.wake()
 			call draw.door(i)
 		endif
 	next
+	for i = 0 to 3
+		if mon.timer(i) < 0 & rand(20) = 0 then call create.monster(i)
+	next
+endproc
+'
+'		Create monster
+'
+proc create.monster(n)
+	' DD pumpkin, E0 jelly E3 spider thing  E6 spikey thing E9 = ghost
+	local i:i = rand(5)
+
+	if i = 0 then mon.iq(n) = 80::mon.speed(n) = 14
+	if i = 1 then mon.iq(n) = 0:mon.speed(n) = 4
+	if i = 2 then mon.iq(n) = 3:mon.speed(n) = 8
+	if i = 3 then mon.iq(n) = 10:mon.speed(n) = 10
+	if i = 4 then mon.iq(n) = 100:mon.speed(n) = 30
+
+	mon.graphic(n) = $DD+i*3+rand(3)
+	mon.xi(n) = rand(2)*2-1:mon.yi(n) = rand(2)*2-1
+	mon.timer(n) = time() + 100
+	mon.alive(n) = false
+	sprite n+10 image $D8 to rand(128)+64,rand(120)+64
+endproc
+'
+'		Move monster
+'
+proc move.monster(n)
+	if mon.alive(n) 
+		if event(mon.timer(n),mon.speed(n))
+			local x,y
+			x = spritex(n+10)+mon.xi(n):y = spritey(n+10)+mon.yi(n)
+			sprite n+10 to x,y
+			if abs(x-128) > 56 then mon.xi(n) = -mon.xi(n)
+			if abs(y-120) > 56 then mon.yi(n) = -mon.yi(n)
+			if rand(100) < mon.iq(n) then call redirect.monster(n)
+		endif
+	else
+		sprite n+10 image ((time() >> 3) & 1)+$D8 flip rand(4)
+		if time() > mon.timer(n)
+			mon.timer(n) = 0:mon.alive(n) = true
+			sprite n+10 image mon.graphic(n) flip 0
+		endif
+	endif
+endproc
+'
+'		redirect a monster
+'
+proc redirect.monster(n)
+	mon.xi(n) = sgn(x.player-spritex(n+10))
+	mon.yi(n) = sgn(y.player-spritey(n+10))
 endproc
 '
 '		create doors in given direction using preset random seed.
@@ -183,7 +235,7 @@ proc make.door(d,n)
 	if n > 4 then door.timer(d) = rand(400)+100
 	if n > 0 then call draw.door(d)			
 	'door.open(d) = true
-	print d,doors(d),door.open(d),door.timer(d)
+	'print d,doors(d),door.open(d),door.timer(d)
 endproc
 '
 '		draw door
@@ -239,7 +291,7 @@ endproc
 '		animate up ladder
 '
 proc animate.up()
-	local y
+	local y:sprite clear
 	for y = -16 to 16
 		sprite 0 image $D6+((y >> 2) & 1) to 128,y+120
 		wait 10
@@ -250,7 +302,7 @@ endproc
 '		animate down pit
 '
 proc animate.down()
-	local i,j,w:cls
+	local i,j,w:cls:sprite clear
 	for i = 1 to 5
 		for j = 0 to 10
 			w = j*10
@@ -320,7 +372,6 @@ proc random.next()
 	next
 endproc
 
-' Create monsters and move them. Type changes : invulnerable, speed, intelligence
 ' Scoring system , shooting
 ' Energy, dropping energy/key objects, collection
 ' SFX
