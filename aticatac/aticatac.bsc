@@ -5,7 +5,7 @@ call initialise.game()
 call draw.room()
 tMove = 0:tMissile = 0
 repeat
-	if event(tMove,3) then call move.player()
+	if event(tMove,1) then call move.player()
 	if event(tMissile,2) then if tMissileEnd >= 0 then call move.missile()
 until false
 end
@@ -38,6 +38,15 @@ proc move.player()
 		y.player = y.player + (yi.player << 1)
 		sprite 0 image $D6 + (((x.player+y.player) >> 3) & 1) flip x.flip to x.player,y.player
 		if abs(x.player-128) > 56 | abs(y.player-120) > 56 then call hit.wall()
+		if floor.centre <> 0
+			if abs(x.player-128) < 16 & abs(y.player-120) < 16 
+				if floor.centre = $D5
+					level = level - 1:call animate.up():call draw.room()
+				else
+					level = level + 1:call animate.down():call draw.room()
+				endif
+			endif
+		endif
 	endif
 	if fire <> 0 
 		if tMissileEnd < 0
@@ -52,6 +61,7 @@ proc move.player()
 endproc
 '
 '		Move missile
+'
 proc move.missile()
 	sprite 1 image $D8 to x.missile,y.missile
 	x.missile = x.missile + xi.missile
@@ -84,16 +94,16 @@ endproc
 proc draw.room()
 	local i,n,g
 	cls:sprite clear
-	ink 3:print chr$(20);x.room;",";y.room
+	ink 3:print chr$(20);level;" ";x.room;",";y.room
 	if level = 1:call draw.room.outline(2):else:call draw.room.outline(1):endif
 	' First is right, second is down
 	call random.seed.room(x.room,y.room-1,level):call make.door(0):call make.door(0)
 	call random.seed.room(x.room,y.room,level):call make.door(1):call make.door(2)
 	call random.seed.room(x.room-1,y.room,level):call make.door(3)
-	contents = 0: ' $D4 pit, $D5 ladder
+	floor.centre = 0: ' $D4 pit, $D5 ladder
 	if x.room <> x.start | y.room <> y.start
-		if (seed & 800) = 0 
-			contents = $D4:if level > 1 & (seed & $800) then contents = $D5
+		if (seed & 800) <> 999
+			floor.centre = $D4:if level > 1 & (seed & $400) then floor.centre = $D5
 		endif
 	endif
 	for i = 0 to 3
@@ -105,7 +115,7 @@ proc draw.room()
 			call draw.wall.element(i,n,$D0 + (seed & 1),2)	
 		endif
 	next
-	if contents <> 0 then image contents to 128-16,120-16
+	if floor.centre <> 0 then image floor.centre to 128-16,120-16
 	text "1 Up" dim 1 ink 3 to 277,4
 	call draw.score():call draw.keys():call draw.energy()
 	if lives > 0
@@ -191,6 +201,32 @@ proc draw.keys()
 	next
 endproc
 '
+'		animate up ladder
+'
+proc animate.up()
+	local y
+	for y = -16 to 16
+		sprite 0 image $D6+((y >> 2) & 1) to 128,y+120
+		wait 10
+	next
+	y.player = 120+32:x.player = 128
+endproc
+'
+'		animate down pit
+'
+proc animate.down()
+	local i,j,w:cls
+	for i = 1 to 5
+		for j = 0 to 10
+			w = j*10
+			rect frame 128-w,120-w ink 7 to 128+w,120+w
+			wait 2
+			rect frame 128-w,120-w ink 0 to 128+w,120+w
+		next
+	next
+endproc
+
+'
 '		draw outline room type 1 (cave) type 2 (room)
 '
 proc draw.room.outline(type)
@@ -249,8 +285,6 @@ proc random.next()
 	next
 endproc
 
-' #define for identifiers.
-' Handle pits and stairs. Stairs need redrawing.
 ' Create monsters and move them. Type changes : invulnerable, speed, intelligence
 ' Scoring system , shooting
 ' Energy, dropping energy/key objects, collection
