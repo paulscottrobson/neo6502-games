@@ -13,13 +13,14 @@ end
 '		initialise game
 '
 proc initialise.game()
-gload "aticatac.gfx"
-	' initialise level and dimensions, power of 2, and put in the middle.
-	level = 1:room.mask = 15:x.start = (room.mask+1) >> 1:y.start = x.start
+	gload "aticatac.gfx"
+	game.data = alloc(2048):load "aticatac.dat",game.data
+	' initialise level and dimensions, put at start
+	size = 12:max.depth = 5
+	level = 0:x.start = 4:y.start = 4
 	' door records, created when room entered.
-	dim doors(3): ' $00 = wall,$C0-$C3 (cave) $C8-$CB (door) open/red/yellow/cyan 
+	dim doors(3): ' Values 0-7 see map.py
 	dim door.open(3): ' true if door is open, false if shut/wall.
-	dim door.period(3): ' if 0 normal door, else period timer open/close
 	dim door.timer(3): ' timer for door opening/closing
 	' initialise player
 	lives = 3:score = 0:x.room = x.start:y.room = y.start
@@ -80,12 +81,12 @@ proc hit.wall()
 	y.player = max(120-56,min(y.player,120+56))
 	if abs(x.player-128) >= 56 & abs(y.player-120) < 10
 		d = -1 if x.player > 128 then d = 1
-		if door.open(d & 3) then x.room = (x.room + d) & room.mask:x.player = 256-x.player:moved = true
+		if door.open(d & 3) then x.room = (x.room + d):x.player = 256-x.player:moved = true
 	endif
 	if abs(y.player-120) >= 56 & abs(x.player-128) < 10
 		d = 0 if y.player > 128 then d = 2
-		if door.open(d & 3) then y.room = (y.room + d - 1) & room.mask:y.player = 240-y.player:moved = true
-	endif
+		if door.open(d & 3) then y.room = (y.room + d - 1) y.player = 240-y.player:moved = true
+		endif
 	if moved then call draw.room()
 endproc
 '
@@ -94,23 +95,22 @@ endproc
 proc draw.room()
 	local i,n,g
 	cls:sprite clear
-	ink 3:print chr$(20);level;" ";x.room;",";y.room
-	if level = 1:call draw.room.outline(2):else:call draw.room.outline(1):endif
+	call random.seed.room(x.room,y.room,level)
+	if level = 0:call draw.room.outline(2):else:call draw.room.outline(1):endif
 	' First is right, second is down
-	call random.seed.room(x.room,y.room-1,level):call make.door(0):call make.door(0)
-	call random.seed.room(x.room,y.room,level):call make.door(1):call make.door(2)
-	call random.seed.room(x.room-1,y.room,level):call make.door(3)
+	call read.map(n,level,x.room,y.room-1):call make.door(0,n >> 3)
+	call read.map(n,level,x.room-1,y.room):call make.door(3,n)
+	call read.map(n,level,x.room,y.room):call make.door(1,n):call make.door(2,n >> 3)
+	ink 3:print chr$(20);level;" ";x.room;",";y.room;" ";n;" "
 	floor.centre = 0: ' $D4 pit, $D5 ladder
-	if x.room <> x.start | y.room <> y.start
-		if (seed & 800) <> 999
-			floor.centre = $D4:if level > 1 & (seed & $400) then floor.centre = $D5
-		endif
+	if n & $40
+		floor.centre = $D4+rand(2)
+		if level = 0 then floor.centre = $D4
+		if level = max.depth-1 then floor.centre = $D5
 	endif
 	for i = 0 to 3
-		'print i;" ";doors(i);" ";door.open(i);" ";door.period(i)
-		if doors(i) then call draw.wall.element(i,0,doors(i),4)
 		call random.next()
-		if (seed & $E0) = 0 & level = 1 
+		if (seed & $E0) = 0 & level = 0
 			n = 32:if (seed & 2) then n = -n
 			call draw.wall.element(i,n,$D0 + (seed & 1),2)	
 		endif
@@ -127,40 +127,33 @@ proc draw.room()
 	tMissileEnd = -1
 endproc
 '
-'		create doors in given direction using preset random seed.
+'		read map
 '
-proc make.door(d)
-	local i,base:base = $C0:if level = 1 then base = $C8
-	doors(d) = 0:door.open(d) = false:door.period(d) = 0:door.timer(d) = -1
-	call random.next()
-	if seed & $100
-		doors(d) = base:door.open(d) = true 
-		if (seed & $C0) 
-			doors(d) = base + 1 + seed % 3:door.open(d) = false
-			if (seed & $10)
-				door.period(d) = 500
-				door.timer(d) = rand(door.period(d))+time()
-			endif
-		endif
-	endif
-	if level = 1
-		if x.room = x.start & y.room = y.start
-			for i = 0 to 3:call open.door(i):next
-		endif
-		if x.room = x.start & y.room = y.start-1 then call open.door(2)
-		if x.room = x.start+1 & y.room = y.start then call open.door(3)
-		if x.room = x.start & y.room = y.start+1 then call open.door(0)
-		if x.room = x.start-1 & y.room = y.start then call open.door(1)
-	endif
-	door.open(d) = true
+proc read.map(ref n,level,x,y)
+	n = peek(game.data + x + y*size + level*size*size)	
 endproc
 '
-'		set door to default open
+'		create doors in given direction using preset random seed.
 '
-proc open.door(d)
-	doors(d) = $C0:if level = 1 then doors(d) = $C8
-	door.open(d) = true:door.period(d) = 0:door.timer(d) = -1
-endproc	
+proc make.door(d,n)
+	n = n & 7
+	doors(d) = n:door.open(d) = false:door.timer(d) = -1
+	if n = 4 then door.open(d) = true
+	if n > 4 then door.timer(d) = rand(400)+100
+	if n > 0 then call draw.door(d)			
+	'door.open(d) = true
+	print d,doors(d),door.open(d),door.timer(d)
+endproc
+'
+'		draw door
+'
+proc draw.door(d)
+	local img:img = $C8:if level > 0 then img = $C0
+	if d <> 4 
+		if door.open(d) = false then img = img + (doors(d) & 3)
+	endif
+	call draw.wall.element(d,0,img,4)
+endproc
 '
 '		draw offset element
 '
@@ -285,7 +278,9 @@ proc random.next()
 	next
 endproc
 
+' Auto doors.
+' Key opening doors.
 ' Create monsters and move them. Type changes : invulnerable, speed, intelligence
 ' Scoring system , shooting
 ' Energy, dropping energy/key objects, collection
-' Doors and Keys
+

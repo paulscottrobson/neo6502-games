@@ -5,4 +5,5 @@ include ../common.make
 endif
 
 build: $(OBJNAME) $(GFXNAME)
+	cp aticatac.dat storage
 
