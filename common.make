@@ -66,9 +66,9 @@ tneo : build
 	make -C $(ROOTDIR)$(S)neo6502-firmware$(S)basic tneo
 
 release: 
-	$(CCOPY) *.bas *.bsc *.gfx *.dat $(ROOTDIR)neo6502-firmware$(S)examples$(S)basic$(S)games
-	$(CCOPY) *.bas *.bsc *.gfx *.dat $(ROOTDIR)neo6502-firmware$(S)basic$(S)storage
-	$(CCOPY) *.bas *.bsc *.gfx *.dat $(ROOTDIR)neo6502-firmware$(S)emulator$(S)storage
+	$(CCOPY) *.bas *.bsc *.gfx *.dat $(ROOTDIR)neo6502-firmware$(S)examples$(S)basic$(S)games || true
+	$(CCOPY) *.bas *.bsc *.gfx *.dat $(ROOTDIR)neo6502-firmware$(S)basic$(S)storage || true
+	$(CCOPY) *.bas *.bsc *.gfx *.dat $(ROOTDIR)neo6502-firmware$(S)emulator$(S)storage || true
 
 cleargfx:
 	$(PYTHON) $(BINDIR)createblanks.zip
