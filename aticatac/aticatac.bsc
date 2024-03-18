@@ -57,6 +57,7 @@ proc move.player()
 				endif
 			endif
 		endif
+		if hit(0,2,10) then call collect.object()
 	endif
 	if fire <> 0 
 		if tMissileEnd < 0
@@ -68,6 +69,13 @@ proc move.player()
 			wend			
 		endif
 	endif
+endproc
+'
+'		Collect object
+'
+proc collect.object()
+	sprite 2 hide
+	call remove.object(level,x.room,y.room)
 endproc
 '
 '		Move missile
@@ -130,21 +138,33 @@ proc draw.room()
 	call read.map(n,level,x.room,y.room-1):call make.door(0,n >> 3)
 	call read.map(n,level,x.room-1,y.room):call make.door(3,n)
 	call read.map(n,level,x.room,y.room):call make.door(1,n):call make.door(2,n >> 3)
+	' What's in the middle on the floor
 	floor.centre = 0: ' $D4 pit, $D5 ladder
 	if n & $40
 		floor.centre = $D4+rand(2)
 		if level = 0 then floor.centre = $D4
 		if level = max.depth-1 then floor.centre = $D5
 	endif
+	' Wall decoration
 	for i = 0 to 3
 		call random.next()
 		if (seed & $E0) = 0 & level = 0
-			n = 32:if (seed & 2) then n = -n
-			call draw.wall.element(i,n,$D0 + (seed & 1),2)	
+			g = 32:if (seed & 2) then g = -g
+			call draw.wall.element(i,g,$D0 + (seed & 1),2)	
 		endif
 	next
+	' Anything to pick up $DA-$DC keys 1-3 $EC-$EE energy.
+	contents = 0
+	if n & $80
+		call random.next():x.contents = (seed % 128)+64
+		call random.next():y.contents = (seed % 112)+120-28
+		call random.next():contents = seed % 6
+		print contents,seed
+		if contents >= 3:contents = contnts + $EC:else:contents = contents+$DA:endif
+	endif
 	for i = 0 to 4:mon.timer(i) = -1:next 
 	if floor.centre <> 0 then image floor.centre to 128-16,120-16
+	if contents <> 0 then sprite 2 image contents to x.contents,y.contents
 	text "1 Up" dim 1 ink 3 to 277,4
 	call draw.score():call draw.keys():call draw.energy()
 	if lives > 0
@@ -161,6 +181,15 @@ endproc
 '
 proc read.map(ref n,level,x,y)
 	n = peek(game.data + x + y*size + level*size*size)	
+endproc
+'
+'		remove object
+'
+proc remove.object(level,x,y)
+	local a:a = game.data + x + y*size + level*size*size
+	print level,x,y,peek(a)
+	poke a,peek(a) & $7F
+	print peek(a)
 endproc
 '
 '		check open/close in current room
@@ -405,7 +434,6 @@ proc random.seed(n)
 endproc
 '
 proc random.seed.room(x,y,l)
-	x = x & room.mask:y = y & room.mask
 	seed = x * 37 + level * 1234567 + y * 617
 endproc
 '
@@ -419,5 +447,4 @@ proc random.next()
 	next
 endproc
 
-' creating energy/key objects & collection
 ' SFX
