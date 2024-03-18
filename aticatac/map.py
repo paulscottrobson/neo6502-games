@@ -13,7 +13,7 @@ class Map(object):
 	def __init__(self,size,levels):
 		self.map = [ 0 ] * size * size * levels 
 		self.size = size
-		random.seed(4242)
+		random.seed(42)
 
 		for self.level in range(0,levels):
 			for x in range(0,self.size):
