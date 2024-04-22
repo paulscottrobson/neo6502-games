@@ -169,17 +169,17 @@ endproc
 '		Check Reached Home
 '
 proc CheckHome()
-	local i,ok:ok = false
+	local i,ok,reset:ok = false:reset = false
 	for i = 0 to 4
 		if abs(xPlayer-xHome(i)) < 16
 			image $80 frame to xHome(i)-8,yPos(9)-16:ok = true
 			freeHomes = freeHomes-1:xHome(i) = -999
-			score = score + 50:call DrawScore()	
+			score = score + 50:call DrawScore():reset = true
 			if freeHomes = 0 then complete = true
-			call ResetPlayer()
 			sfx 0,8
 		endif
 	next
+	if reset then call ResetPlayer()
 	if ok = 0 then dead = true
 endproc
 '
